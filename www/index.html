@@ -558,14 +558,65 @@ const COMMANDS = [
 ];
 
 const JOKES = [
+  // Robi's own jokes
   [T("What does a cow say?","Il-baqra x'tgħid?"), T("Moo! And a robot cow says… BEEP-MOO!","Muu! U l-baqra robot tgħid… BIP-MUU!")],
   [T("Knock knock! Who's there? Robot!","Tok tok! Min hu? Robot!"), T("Robot who? Ro-BOOP! Boop on your nose!","Robot min? Ro-BUP! Bup fuq l-imnieħer!")],
   [T("Why is the robot so happy?","Għaliex ir-robot ferħan?"), T("Because it has a friend like YOU!","Għax għandu ħabib bħalek!")],
-  [T("What does a robot eat for breakfast?","Ir-robot x'jiekol għall-kolazzjon?"), T("Chips! Crunch crunch!","Ċipps! Krank krank!")],
+  [T("What does a robot eat for breakfast?","Ir-robot x'jiekol għall-kolazzjon?"), T("Micro-chips! Crunch crunch!","Mikro-ċipps! Krank krank!")],
   [T("The robot wanted to be a duck…","Ir-robot ried isir papra…"), T("Beep… beep… QUACK!","Bip… bip… KWAK!")],
   [T("What is the robot's favourite dance?","X'inhu l-iżfin favorit tar-robot?"), T("The ROBOT dance, of course!","L-iżfin tar-robot, naturalment!")],
   [T("What sound does a sleepy robot make?","Robot bi ngħas x'ħoss jagħmel?"), T("Beep… beep… ZZZ!","Bip… bip… ZZZ!")],
-  [T("Why did the robot wear boots?","Għaliex ir-robot libes l-istivali?"), T("To stomp in the puddles! Splash!","Biex jaqbeż fl-għadajjar! Xprakk!")]
+  [T("Why did the robot wear boots?","Għaliex ir-robot libes l-istivali?"), T("To stomp in the puddles! Splash!","Biex jaqbeż fl-għadajjar! Xprakk!")],
+  // Animals
+  [T("What does a robot sheep say?","In-nagħġa robot x'tgħid?"), T("Beee-eep! Beee-eep!","Biii-ip! Biii-ip!")],
+  [T("What is a robot's favourite animal?","X'inhu l-annimal favorit tar-robot?"), T("A cow-culator! Moo plus moo!","Il-baqra-kalkulatriċi! Muu u muu!")],
+  [T("Why was the robot dog itchy?","Għaliex il-kelb robot kellu ħakk?"), T("It had robo-ticks!","Kellu r-robo-qurad!")],
+  [T("How do you calm down a robot dog?","Kif tikkalma kelb robot?"), T("Press the PAWS button!","Tagħfas il-buttuna PAWS! (paws = saqajn tal-kelb)")],
+  [T("Is the robot dog scary?","Il-kelb robot jbeżża'?"), T("No! Its bark is worse than its byte!","Le! Jinbaħ biss, ma jigdimx!")],
+  [T("Why don't robot chickens play basketball?","Għaliex it-tiġieġ robot ma jilagħbux basketball?"), T("Too many technical FOWLS!","Wisq fowls tekniċi! (fowl = tiġieġa)")],
+  [T("Why did the robot chicken cross the road?","Għaliex it-tiġieġa robot qasmet it-triq?"), T("It was programmed to!","Għax hekk kienet ipprogrammata!")],
+  // Food
+  [T("What does a robot have for lunch?","Ir-robot x'jiekol għall-ikel?"), T("A MEGA-byte! Nom nom!","MEGA-byte! Nom nom! (bite = gidma)")],
+  [T("How does a robot eat pizza?","Kif jiekol il-pizza r-robot?"), T("One byte at a time!","Byte b'byte! Gidma gidma!")],
+  [T("What do robots eat?","Ir-robots x'jieklu?"), T("A bit of this and a byte of that!","Bit minn hawn u byte minn hemm!")],
+  [T("Why do robots love pancakes?","Għaliex ir-robots iħobbu l-pancakes?"), T("Because they're full of BATTER-y!","Għax mimlija batter-ija!")],
+  [T("Why did the robot eat a light bulb?","Għaliex ir-robot kiel gilob?"), T("It wanted a LIGHT snack!","Ried snack ħafif! (light = dawl u ħafif)")],
+  [T("How do baby robots drink their milk?","Kif jixorbu l-ħalib it-trabi robots?"), T("From a ro-BOTTLE!","Mir-ro-flixkun!")],
+  [T("Want to hear a robot pizza joke?","Trid tisma' ċajta tal-pizza robot?"), T("Never mind… it's too CHEESY!","Ħallieha… għandha wisq ġobon!")],
+  // Clothes and shoes
+  [T("Why did the robot go to the shoe shop?","Għaliex ir-robot mar il-ħanut taż-żraben?"), T("To get RE-BOOTED!","Biex jieħu stivali ġodda! (re-boot = jerġa' jixgħel)")],
+  [T("Why are robots shy?","Għaliex ir-robots jistħu?"), T("They have hardware and software… but no underwear!","Għandhom hardware u software… imma l-ebda qalziet ta' taħt!")],
+  [T("What does a robot wear in the snow?","Ir-robot x'jilbes fil-borra?"), T("Snow boots! It's a SNOW-BOT!","Stivali tal-borra! Huwa SNOW-BOT!")],
+  [T("What do you call a frozen robot?","Kif issejjaħ robot iffriżat?"), T("An ICE-BORG! Brrr!","ICE-BORG! Brrr!")],
+  // Getting around
+  [T("How did the robot cross the river?","Kif qasam ix-xmara r-robot?"), T("In a RO-BOAT! Row row row!","Bir-RO-DGĦAJSA! Qadef, qadef!")],
+  [T("What do you call a robot that drives a car?","Kif issejjaħ robot li jsuq karozza?"), T("A ROAD-BOT! Vroom!","ROAD-BOT! Vrumm!")],
+  [T("Why couldn't the robot get a driving licence?","Għaliex ir-robot ma setax jieħu l-liċenzja tas-sewqan?"), T("It beeped too much! BEEP BEEP!","Għax jagħmel wisq bip! BIP BIP!")],
+  [T("Why was the robot tired after the car ride?","Għaliex ir-robot għeja wara l-vjaġġ bil-karozza?"), T("It was a HARD DRIVE!","Kien hard drive! (sewqa iebsa)")],
+  [T("Why did the robot fall off its bike?","Għaliex ir-robot waqa' mir-rota?"), T("It was a little bit RUSTY!","Kien ftit rusty! (sadid u nieqes il-prattika)")],
+  [T("Why did the robot sleep under the car?","Għaliex ir-robot raqad taħt il-karozza?"), T("To wake up OILY in the morning!","Biex iqum OILY filgħodu! (early = kmieni)")],
+  // Robot life
+  [T("What did the robot say when it was time for bed?","Ir-robot x'qal meta wasal il-ħin tas-sodda?"), T("Ro-NOT! Not yet!","Ro-LE! Mhux issa!")],
+  [T("Why do robots go on holiday?","Għaliex ir-robots imorru btala?"), T("To recharge their batteries!","Biex jiċċarġjaw il-batteriji!")],
+  [T("Why was the robot sneezing?","Għaliex ir-robot kien qed jgħatas?"), T("It caught a computer virus! A-CHOO-BEEP!","Qabditu virus tal-kompjuter! ATXU-BIP!")],
+  [T("Why are robots never scared?","Għaliex ir-robots qatt ma jibżgħu?"), T("They have nerves of STEEL!","Għandhom nervituri tal-azzar!")],
+  [T("Where do robots sit?","Fejn joqogħdu bilqiegħda r-robots?"), T("On their ro-BOTTOMS!","Fuq ir-ro-BOTTOMS tagħhom!")],
+  [T("How do robots get strong?","Kif isiru b'saħħithom ir-robots?"), T("Circuit training! One, two, BEEP!","Circuit training! Wieħed, tnejn, BIP!")],
+  [T("What is a robot's favourite music?","X'inhi l-mużika favorita tar-robot?"), T("Heavy METAL!","Heavy METAL! (metall)")],
+  [T("Why did the robot get so grumpy?","Għaliex ir-robot tant kien inkurlat?"), T("Everyone kept pushing its buttons!","Kulħadd baqa' jagħfaslu l-buttuni!")],
+  [T("What was wrong with the wooden robot?","X'kien hemm ħażin bir-robot tal-injam?"), T("It just WOODEN work!","WOODEN work! Ma kienx jaħdem! (wooden = tal-injam)")],
+  [T("What did the baby robot call its daddy?","It-tarbija robot kif sejħet lil missierha?"), T("DA-TA! Da-ta!","DA-TA! Da-ta!")],
+  [T("How do robots say goodbye?","Kif isellmu r-robots?"), T("Bye-nary! Bye bye! Beep beep!","Bye-nary! Ċaw ċaw! Bip bip!")],
+  [T("What did the robot say to its best friend?","Ir-robot x'qal lill-aqwa ħabib tiegħu?"), T("I like you a BOT!","Inħobbok BOT! (a lot = ħafna)")],
+  [T("Why is a robot mechanic never lonely?","Għaliex il-mekkaniku tar-robots qatt ma jkun waħdu?"), T("He's always making new friends!","Dejjem qed jibni ħbieb ġodda!")],
+  [T("What do you get if you cross a robot and a tractor?","X'jiġik jekk taħlat robot ma' trattur?"), T("A TRANS-FARMER!","TRANS-FARMER! (farmer = bidwi)")],
+  [T("How many robots does it take to change a light bulb?","Kemm hemm bżonn robots biex ibiddlu gilob?"), T("Three! One holds the bulb and two turn the ladder!","Tlieta! Wieħed iżomm il-gilob u tnejn iduru s-sellum!")],
+  [T("The inventor asked the robot: 'Can you give me a hand?'","L-inventur staqsa lir-robot: 'Tagħtini daqqa t'id?'"), T("So the robot took off its hand and gave it to him!","U r-robot qala' idu u tahielu!")],
+  [T("What's the difference between pizza and robot jokes?","X'inhi d-differenza bejn il-pizza u ċ-ċajt tar-robots?"), T("Robot jokes can't be TOPPED!","Iċ-ċajt tar-robots ma jistax jingħeleb!")],
+  // Knock knock
+  [T("Knock knock! Who's there? Anne!","Tok tok! Min hu? Anne!"), T("Anne who? Anne DROID!","Anne min? Anne DROID! (android)")],
+  [T("Knock knock! Who's there? Don!","Tok tok! Min hu? Don!"), T("Don who? DON'T push my robot buttons!","Don min? Tagħfasx il-buttuni tiegħi! (don't = tagħmilx)")],
+  [T("Knock knock! Who's there? Rob!","Tok tok! Min hu? Rob!"), T("Rob who? Ro-BOT, that's who! Beep!","Rob min? Ro-BOT, hekk min! Bip!")]
 ];
 
 const FEELINGS = [
@@ -1050,16 +1101,16 @@ function enter(screen){
 const INTRO=[
   {say:()=>T("Hello! Nice to meet you! I'm your robot friend!","Bonġu! Għandi pjaċir nsir nafek! Jien il-ħabib robot tiegħek!"), anim:"wave"},
   {say:()=>T("I can dance too!","Naf niżfen ukoll!"), anim:"dance"},
-  {say:()=>T("My name was stored in RAM, so I forgot it 😔 This time I'll do it right! What do you want to call me?",
-             "Ismi kien maħżun fir-RAM, u insejtu 😔 Din id-darba se nagħmilha sew! Kif trid issejjaħli?"), anim:"think", form:"robot"},
+  {say:()=>T("Oops! My name was saved in my RAM, and I forgot it 😔 Can you give me a new name?",
+             "Ops! Ismi kien maħżun fir-RAM tiegħi, u insejtu 😔 Tista' tagħtini isem ġdid?"), anim:"think", form:"robot"},
   {say:()=>T("Thinking… thinking… saving… saving… beep boop!","Naħseb… naħseb… qed nissejvja… qed nissejvja… bip bup!"), anim:"think", auto:"saving"},
   {say:()=>T(`Great! Now I remember: my name is ${N()}!`,`Bravu! Issa niftakar: jisimni ${N()}!`), anim:"jump"},
   {say:()=>T("Hey, and what's your name?","U int, x'jismek?"), anim:"tilt", form:"friend"},
   {say:()=>T(`${F()}?! OMG!! I can't believe I'm meeting the great ${F()}!`,`${FM()}?! Ajma!! Ma nistax nemmen li qed niltaqa' mal-leġġenda ${FM()}!`), anim:"jump"},
-  {say:()=>T("My best friend Robot knows your parents, and they talk about you all the time! You're a legend around here!",
-             "L-aqwa ħabib tiegħi, Robot, jaf lill-ġenituri tiegħek, u dejjem jitkellmu fuqek! Int leġġenda hawnhekk!"), anim:"waveBoth"},
-  {say:()=>T("Crazy!","Inkredibbli!"), anim:"laugh", auto:"next"},
-  {say:()=>T("Well… hello!","Mela… bonġu!"), anim:"wave", last:true}
+  {say:()=>T("Your family told me all about you! They say you're the best! You're a legend around here!",
+             "Il-familja tiegħek qaltli kollox fuqek! Jgħidu li int l-aqwa! Int leġġenda hawnhekk!"), anim:"waveBoth"},
+  {say:()=>T("Wow! Wow! Wow!","Wow! Wow! Wow!"), anim:"laugh", auto:"next"},
+  {say:()=>T(`Let's be best friends, ${F()}! Ready to play?`,`Ejja nkunu l-aqwa ħbieb, ${FM()}! Lest biex nilagħbu?`), anim:"wave", last:true}
 ];
 function renderIntro(){
   const s=INTRO[S.step];
@@ -1085,7 +1136,7 @@ const ACTS={
   wake(){
     R?.sleep(false); R?.play("jump"); SFX.wake(); startNFC();
     if(!onboarded){ later(()=>introStep(0),900); }
-    else {; go("menu"); say(T(`Welcome back, ${F()}! I missed you!`,`Merħba lura, ${FM()}! Ksibtli nieqes!`)); }
+    else {; go("menu"); say(T(`Welcome back, ${F()}! I missed you!`,`Merħba lura, ${FM()}! Kont nimmissjak!`)); }
   },
   introNext(){ introStep(S.step+1); },
   introDone(){ onboarded=true; LS.set("robi-onboarded",true); go("menu"); say(UI.playGame); R?.play("dance"); },
@@ -1143,7 +1194,7 @@ function exploreScan(g){
   const d=GADGETS[g];
   if(!S.found.includes(g)){ S.found.push(g); render(); }
   say(d.found); R?.play(d.anim);
-  if(S.found.length===5){ later(()=>{ say(T(`Bravo, ${F()}! You found all my gadgets! You're a super explorer!`,`Bravu, ${FM()}! Sibthom kollha! Int super!`)); SFX.win(); R?.play("dance"); render(); },1800); }
+  if(S.found.length===5){ later(()=>{ say(T(`Bravo, ${F()}! You found all my gadgets! You're a super explorer!`,`Bravu, ${FM()}! Sibt l-aġġeġġi kollha tiegħi! Int super esploratur!`)); SFX.win(); R?.play("dance"); render(); },1800); }
   saveSession();
 }
 
@@ -1194,17 +1245,17 @@ function renderHash(){
     <div class="slots">${slots}</div><div class="label">${tx(msg)}</div></div>`;
 }
 function hashBegin(){ S.seq=randSeq(S.n); S.pos=0; S.known=S.seq.map(()=>false); S.phase="play"; render();
-  say(T("Find the secret code! Scan a gadget. If it's right, it gets computed!","Sib il-kodiċi sigriet! Skennja aġġeġġ. Jekk huwa t-tajjeb, jiġi kkalkulat!")); R?.play("think"); saveSession(); }
+  say(T("Find the secret code! Scan my gadgets one by one. The right one lights up!","Sib il-kodiċi sigriet! Skennja l-aġġeġġi tiegħi wieħed wieħed. Dak it-tajjeb jixgħel!")); R?.play("think"); saveSession(); }
 function hashScan(g){
   if(S.phase!=="play"){ if(g==="hash") hashBegin(); else say(UI.scanTo("hash")); return; }
   if(g===S.seq[S.pos]){
     S.known[S.pos]=true; S.pos++; SFX.ok();
     if(S.pos===S.n){ S.phase="win"; render(); SFX.win(); R?.play("spin");
       say(T(`Hash cracked! You're a super hacker, ${F()}!`,`Il-hash inkiser! Int super hacker, ${FM()}!`)); }
-    else { render(); say(T("Computed! ✔ What's next?","Ikkalkulat! ✔ X'jmiss?")); R?.play("hop"); }
+    else { render(); say(T("Yes! ✔ What comes next?","Iva! ✔ X'jiġi wara?")); R?.play("hop"); }
   } else {
     S.pos=0; render(); SFX.wrong(); buzz(200); R?.play("wiggle");
-    say(T("Wrong! Start again from the beginning. The ones you found stay as clues.","Ħażin! Erġa' ibda mill-bidu. Dawk li sibt jibqgħu bħala ħjiel."));
+    say(T("Oops, not that one! Back to the start. The ones you found stay lit to help you.","Ops, mhux dak! Lura għall-bidu. Dawk li sibt jibqgħu mixgħula biex jgħinuk."));
   }
   saveSession();
 }
@@ -1266,7 +1317,7 @@ let jokeIdx=-1;
 function tellJoke(){
   clearTimers(); let i; do{ i=Math.floor(Math.random()*JOKES.length); }while(i===jokeIdx && JOKES.length>1); jokeIdx=i;
   const [a,b]=JOKES[i]; say(a); R?.play("think"); tone(660,0.1);
-  later(()=>{ say(b); SFX.laugh(); R?.play("laugh"); },2800);
+  later(()=>{ say(b); SFX.laugh(); R?.play("laugh"); },Math.min(5000,Math.max(2800,1600+a.en.length*45)));
 }
 
 /* ============================================================
@@ -1292,7 +1343,7 @@ function renderSetup(){
     <h2>${tx(T("Write the gadget tags","Ikteb it-tags tal-aġġeġġi"))}</h2>
     <p>${tx(T("Use Chrome on an Android phone. Tap a gadget, then hold its tag to the back of the phone. The robot's link and data are added; anything else already on the tag is kept. Left and right are the robot's own left and right.",
               "Uża Chrome fuq telefon Android. Agħfas aġġeġġ, imbagħad qarreb it-tag tiegħu wara t-telefon. Il-link u d-data tar-robot jiżdiedu; kull ħaġa oħra fuq it-tag tinżamm. Ix-xellug u l-lemin huma tar-robot innifsu."))}</p>
-    <p><label for="base">${tx(T("Page address (your HTTPS link)","L-indirizz tal-paġna (il-link HTTPS tiegħek)"))}</label></p>
+    <p><label for="base">${tx(T("Link written on the tags","Il-link miktub fuq it-tags"))}</label></p>
     <input id="base" type="url" value="${esc(baseUrl())}">
     <div class="grid" id="writeRow">${GKEYS.map(gbtn).join("")}</div>
     <p id="writeMsg"></p>
