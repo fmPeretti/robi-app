@@ -1,0 +1,27 @@
+# Robi web version (static www/), served at https://robi.panbias.com.ar
+# behind the shared edge proxy (/opt/edge, vhost in /opt/edge/conf.d/robi.conf).
+name: robi
+
+services:
+  web:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    networks:
+      edge:
+        aliases: [robi-web]
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+
+networks:
+  edge:
+    external: true

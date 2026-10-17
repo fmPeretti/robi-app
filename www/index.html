@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#eef2fd">
+<script src="robi-config.js"></script>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none} input{-webkit-user-select:text;user-select:text} img{max-width:100%} [hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Robi the Robot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=JetBrains+Mono:wght@600;700&display=swap">
+<style>
+/* Layout: one-column toy screen. Top bar (name, language, read-aloud), speech bubble, the 3D plushie on a soft spotlight, then the panel for the current screen. Grown-up setup last. Light, soft "toy shelf" theme. */
+:root{
+  --bg1:#eef2fd; --bg2:#f8f4ff;
+  --surface:#ffffff; --line:#dbe1f3;
+  --ink:#1d2142; --muted:#5d6386;
+  --mt:#9a4f0e;
+  --accent:#2f6fdb; --accent-d:#1f4fa6;
+  --term:#141a36; --term-fg:#93f0bd;
+  --t-explore:#ffd55e; --t-memory:#bfaeff; --t-hash:#ff9fba; --t-cmd:#86e2b6; --t-play:#7ccaf7; --t-feel:#ffb886; --t-joke:#f9e26c;
+  --shadow:0 10px 28px rgba(40,52,120,.10),0 2px 6px rgba(40,52,120,.06);
+  --font-display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Nunito",system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{min-height:100%}
+body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2)) fixed;color:var(--ink);font-family:var(--font-body);font-size:20px;line-height:1.3;overflow-x:hidden}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:12px 40px;display:flex;flex-direction:column;align-items:stretch;gap:14px;box-sizing:border-box}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.t-en,.t-mt{display:block;text-wrap:balance}
+.t-en{font-family:var(--font-display);font-weight:600}
+.t-mt{font-family:var(--font-display);font-weight:500;color:var(--mt)}
+.top{display:flex;align-items:center;gap:10px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.4rem,6.5vw,1.9rem);margin:0;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:3.5ch;flex:1}
+.lang{display:flex;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.lang button{border:0;background:transparent;border-radius:999px;padding:9px 12px;font-family:var(--font-display);font-weight:700;font-size:.95rem;cursor:pointer;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.iconbtn{border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:50%;width:48px;height:48px;font-size:1.35rem;cursor:pointer;display:grid;place-items:center;color:var(--muted);flex:none}
+.iconbtn[aria-pressed="true"]{background:var(--accent);color:#fff}
+.bubble{position:relative;background:var(--surface);border-radius:28px;padding:16px 22px;text-align:center;min-height:3.6em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:var(--shadow);z-index:2}
+.bubble::after{content:"";position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border:14px solid transparent;border-bottom:0;border-top-color:var(--surface)}
+.bubble .t-en{font-size:1.55rem;line-height:1.18}
+.bubble .t-mt{font-size:1.3rem;line-height:1.2}
+.bubble.solo .t-en,.bubble.solo .t-mt{font-size:1.65rem;color:var(--ink)}
+.bubble.pop{animation:pop .38s ease}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+.speech{display:flex;align-items:center;gap:14px}
+.speech .bubble{flex:1;min-width:0}
+.avatar{display:none;width:96px;height:96px;flex:none;border-radius:50%;background:radial-gradient(circle at 50% 38%,#ffffff 0%,#e6ebfb 70%);box-shadow:var(--shadow);object-fit:cover}
+body.compact .avatar{display:block}
+body.compact .stage{display:none}
+/* menu: the robot's face sits inside the speech bubble, left of the text */
+body.compact .speech{background:var(--surface);border-radius:28px;box-shadow:var(--shadow);padding:8px 18px 8px 8px;gap:8px}
+body.compact .speech .bubble{background:transparent;box-shadow:none;border-radius:0;padding:6px 0;text-align:left;align-items:flex-start}
+body.compact .bubble::after{display:none}
+body.compact .avatar{background:none;box-shadow:none;border-radius:0}
+body.compact .bubble{min-height:0;padding:14px 18px}
+.avatar.talk{animation:talk .5s ease}
+@keyframes talk{0%,100%{transform:translateY(0) rotate(0)}35%{transform:translateY(-6px) rotate(-4deg)}70%{transform:translateY(0) rotate(3deg)}}
+/* menu fits one screen: the grid takes whatever height is left */
+body.compact .wrap{min-height:100dvh;padding-block:10px 12px;gap:12px}
+body.compact .panel{flex:1;display:flex;flex-direction:column;min-height:0}
+body.compact .menu{flex:1;grid-template-rows:repeat(3,minmax(0,1fr)) auto;grid-auto-rows:auto;gap:10px}
+body.compact .tilebtn{padding:8px 8px 10px;gap:4px;justify-content:center;overflow:hidden}
+body.compact .tilebtn .ic{width:clamp(34px,5.2vh,56px);height:clamp(34px,5.2vh,56px)}
+body.compact .tilebtn .ic svg{width:60%;height:60%}
+body.compact .tilebtn .t-en{font-size:clamp(.95rem,2.3vh,1.18rem)}
+body.compact .tilebtn .t-mt{font-size:clamp(.82rem,1.9vh,1rem)}
+body.compact .tilebtn.wide{padding:8px 12px}
+body.compact .avatar{width:clamp(64px,10vh,92px);height:clamp(64px,10vh,92px)}
+body.compact .bubble .t-en{font-size:clamp(1.1rem,2.7vh,1.35rem)}
+body.compact .bubble .t-mt{font-size:clamp(.95rem,2.3vh,1.15rem)}
+body.compact details.setup:not([open]){display:none}
+.tools .iconbtn{width:44px;height:44px}
+.tools{gap:6px;flex:none}
+@media (max-width:420px){ .lang button{padding:8px 9px;font-size:.88rem} .tools .iconbtn{width:40px;height:40px} }
+.scanfab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;border:0;border-radius:999px;padding:12px 18px;background:var(--ink);color:#fff;font:inherit;font-weight:800;display:flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(20,24,60,.3);cursor:pointer}
+.scanfab svg{width:24px;height:24px}
+.scanfab .t-en,.scanfab .t-mt{display:inline;font-size:1rem;color:#fff}
+.scanfab .t-mt{opacity:.85}
+.stage{position:relative;width:100%;height:min(44vh,400px);min-height:290px;margin-top:-4px;touch-action:pan-y;cursor:pointer}
+.stage::before{content:"";position:absolute;left:50%;top:52%;width:min(86%,340px);aspect-ratio:1;max-width:100%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#ffffff 0%,rgba(255,255,255,.65) 45%,rgba(255,255,255,0) 70%);pointer-events:none}
+.stage canvas{position:relative;display:block;width:100%;height:100%}
+.hint .t-en,.hint .t-mt{display:inline;margin:0 .25em}
+.hint{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);display:block;text-align:center;background:rgba(255,255,255,.85);border-radius:999px;padding:5px 12px;color:var(--muted);pointer-events:none;white-space:nowrap;max-width:100%;overflow:hidden;box-sizing:border-box}
+.hint .t-en,.hint .t-mt{font-family:var(--font-body);font-size:.74rem;font-weight:700;display:inline}
+.hint .t-en+.t-mt::before{content:" · ";color:var(--muted)}
+.hint:empty{display:none}
+.hint{top:auto;bottom:4px;left:auto;right:0;transform:none;white-space:nowrap;max-width:none}
+.hint .t-en,.hint .t-mt{display:inline!important;white-space:nowrap}
+.nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:3rem}
+.panel{display:flex;flex-direction:column;gap:14px}
+.big{border:0;border-radius:24px;padding:16px 20px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 5px 0 var(--accent-d);display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;transition:transform .08s}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 var(--accent-d)}
+.big .t-en{font-size:1.4rem;font-weight:700}
+.big .t-mt{font-size:1.12rem;color:rgba(255,255,255,.85)}
+.big.alt{background:var(--surface);color:var(--ink);box-shadow:0 5px 0 var(--line)}
+.big.alt .t-mt{color:var(--mt)}
+.menu{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px}
+.tilebtn{border:0;border-radius:26px;background:var(--tc);color:var(--ink);cursor:pointer;padding:14px 12px 16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;text-align:center;box-shadow:0 5px 0 color-mix(in srgb,var(--tc) 62%,#3a3f6b);transition:transform .08s;min-width:0}
+.tilebtn:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--tc) 62%,#3a3f6b)}
+.tilebtn .ic{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.78);display:grid;place-items:center;font-size:2rem;color:var(--ink);flex:none}
+.tilebtn .t-en{font-size:1.18rem;font-weight:700;line-height:1.15}
+.tilebtn .t-mt{font-size:1rem;color:#5a3a12;line-height:1.15}
+.tilebtn.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:14px;padding:12px}
+.tilebtn.wide .lbl{text-align:left}
+.back{align-self:flex-start;border:0;background:var(--surface);box-shadow:var(--shadow);color:var(--ink);border-radius:999px;padding:9px 18px 9px 12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.back svg{font-size:1.2rem}
+.back .t-en,.back .t-mt{display:inline;font-size:1.05rem}
+.back .t-mt{font-size:.95rem}
+.card{background:var(--surface);border-radius:26px;padding:18px 16px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
+.label{display:flex;flex-direction:column;gap:2px;text-align:center}
+.label .t-en{font-size:1.25rem}.label .t-mt{font-size:1.08rem}
+.gi{position:relative;display:inline-grid;place-items:center;line-height:1}
+.gi .lr{position:absolute;right:-.45em;bottom:-.3em;font-family:var(--font-display);font-size:.42em;background:currentColor;border-radius:6px;padding:1px 4px;line-height:1.1}
+.gi .lr b{color:#fff;font-weight:700}
+.slots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.slot{width:64px;height:64px;border-radius:18px;border:3px dashed var(--line);background:#f6f8ff;display:grid;place-items:center;font-size:2rem;font-family:var(--font-display);font-weight:700;color:#b3bad6;box-sizing:border-box}
+.slot.on{border-style:solid;border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,#fff);color:var(--c)}
+.slot.cur{border-color:var(--accent);border-style:solid;animation:pulse 1s ease-in-out infinite}
+.slot.hintslot{opacity:.45}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tile{border-radius:18px;border:3px dashed var(--line);background:#f6f8ff;aspect-ratio:1;display:grid;place-items:center;font-size:1.8rem;max-width:100%;color:#b3bad6;font-family:var(--font-display);font-weight:700;box-sizing:border-box}
+.tile.on{border-style:solid;border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,#fff);color:var(--c)}
+.pick{display:flex;gap:10px;justify-content:center}
+.pick button{width:58px;height:58px;border-radius:50%;border:3px solid var(--line);background:#fff;color:var(--ink);font-family:var(--font-display);font-weight:700;font-size:1.45rem;cursor:pointer}
+.pick button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.scanme{display:flex;align-items:center;justify-content:center;gap:16px;background:#f3f6ff;border-radius:20px;padding:14px 16px}
+.scanme .gi{font-size:2.6rem;animation:pulse 1.2s ease-in-out infinite}
+.scanme .label{text-align:left}
+.term{background:var(--term);color:var(--term-fg);font-family:var(--font-mono);border-radius:22px;padding:16px;font-size:.95rem;display:flex;flex-direction:column;gap:8px;overflow-x:auto;box-shadow:var(--shadow)}
+.term .t-en{font-family:var(--font-mono);font-weight:700;font-size:1rem;color:#fff}
+.term .t-mt{font-family:var(--font-mono);font-size:.88rem;color:#ffd27a}
+.term .row{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.term .k{white-space:nowrap;font-size:1.4rem;display:flex;gap:6px;align-items:center;color:var(--term-fg);min-width:96px}
+.term .plus{font-size:1rem;opacity:.7}
+.term .v .t-en{color:var(--term-fg)}
+.prompt{font-size:1.3rem;color:#fff;display:flex;align-items:center;gap:8px}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--term-fg);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.feel{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.feel .big{min-height:100px;justify-content:center}
+.feel .ico{font-size:2.2rem;line-height:1}
+.form{display:flex;flex-direction:column;gap:12px}
+.form input{font-family:var(--font-display);font-size:1.6rem;padding:14px 16px;border-radius:20px;border:3px solid var(--line);background:var(--surface);color:var(--ink);text-align:center;min-width:0}
+.status{text-align:center;color:var(--muted)}
+.status .t-en{font-size:.95rem}.status .t-mt{font-size:.88rem}
+details.setup{background:var(--surface);border-radius:22px;padding:14px 18px;font-size:.95rem;box-shadow:var(--shadow)}
+details.setup summary{cursor:pointer;color:var(--muted)}
+summary .t-en,summary .t-mt{display:inline;font-family:var(--font-body);font-weight:800}
+summary .t-mt{margin-left:.5em}
+.setup h2{font-size:1.1rem;margin:1.1em 0 .3em}
+.setup h2 .t-en,.setup h2 .t-mt{font-family:var(--font-display);font-weight:700}
+.setup p .t-en,.setup p .t-mt,.setup label .t-en,.setup label .t-mt,.setup button .t-en,.setup button .t-mt{font-family:var(--font-body)}
+.setup p{margin:.4em 0;line-height:1.4}
+.setup input[type=text],.setup input[type=url]{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:12px;border:2px solid var(--line);font:inherit;color:var(--ink);background:#fbfcff}
+.setup .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.setup .row2 button,.setup .grid button{border:0;border-radius:14px;padding:10px 14px;font-weight:800;cursor:pointer;background:#eef2fd;color:var(--ink);display:flex;gap:8px;align-items:center;text-align:left}
+.setup .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.setup .gi{font-size:1.4rem}
+.setup code{font-size:.8rem;word-break:break-all}
+.setup label.chk{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+.setup label.chk input{width:22px;height:22px;flex:none;margin-top:2px}
+@media (max-width:380px){ .bubble .t-en{font-size:1.38rem} .tilebtn .t-en{font-size:1.05rem} .lang button{padding:8px 9px} }
+@media (prefers-reduced-motion:reduce){.bubble.pop,.slot.cur,.scanme .gi{animation:none}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1 id="title">Robi</h1>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="false">EN</button>
+      <button data-lang="mt" aria-pressed="false">MT</button>
+      <button data-lang="both" aria-pressed="true">EN+MT</button>
+    </div>
+    <button class="iconbtn" id="gear" aria-label="Grown-ups settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg></button>
+    <button class="iconbtn" id="voice" aria-pressed="false" aria-label="Read aloud"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+  </div>
+
+  <div class="speech" id="speech"><img class="avatar" id="avatar" alt=""><div class="bubble" id="bubble"></div></div>
+
+  <div class="stage" id="stage">
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+  <div class="status" id="status"></div>
+  <button class="scanfab" id="scanBtn" hidden></button>
+
+  <details class="setup" id="setup">
+    <summary id="setupSum"></summary>
+    <div id="setupBody"></div>
+  </details>
+</div>
+
+<script id="frag" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 uRes;
+uniform float uRot,uHop,uTilt,uNod,uAnt,uArmL,uArmR,uGlowPart,uGlowAmt,uPick,uTime,uRoll,uFootL,uFootR,uSleep;
+uniform vec3 uGlowCol,uRingCol,uCam,uTarget;
+uniform sampler2D uFuzz;
+
+#define PI 3.14159265
+#define TAU 6.2831853
+const float SW=0.047;   // stitch width (m-ish units, robot is ~1.3 tall)
+const float RH=0.040;   // row height
+
+vec2 r2(vec2 v,float a){float c=cos(a),s=sin(a);return vec2(c*v.x-s*v.y,s*v.x+c*v.y);}
+float smin(float a,float b,float k){float h=max(k-abs(a-b),0.0)/k;return min(a,b)-h*h*k*0.25;}
+float sdEll(vec3 p,vec3 r){float k0=length(p/r);float k1=length(p/(r*r));return k0*(k0-1.0)/max(k1,1e-5);}
+float sdCap(vec3 p,vec3 a,vec3 b,float r){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);return length(pa-ba*h)-r;}
+float sdTor(vec3 p,float R,float r){vec2 q=vec2(length(p.xy)-R,p.z);return length(q)-r;}
+float sdRCyl(vec3 p,float ra,float rb,float h){vec2 d=vec2(length(p.xz)-ra+rb,abs(p.y)-h);return min(max(d.x,d.y),0.0)+length(max(d,0.0))-rb;}
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+
+// ---- rig spaces ----
+vec3 headSpace(vec3 p){vec3 q=p-vec3(0.0,0.5,0.0);q.xy=r2(q.xy,-uTilt);q.yz=r2(q.yz,-uNod);return q+vec3(0.0,0.5,0.0);}
+vec3 antSpace(vec3 q){vec3 a=q-vec3(0.0,0.987,0.0);a.xy=r2(a.xy,-uAnt);return a;}
+vec3 armSpace(vec3 p,float s,float ang){vec3 q=p-vec3(s*0.148,0.462,0.012);q.xy=r2(q.xy,-s*ang);q.yz=r2(q.yz,0.2);return q;}
+float zf(float x){return sqrt(0.158*0.158-x*x)+0.002;}
+
+float sdArm(vec3 q){
+  const float L=0.215;
+  vec3 qq=q; qq.z*=1.1;
+  float h=clamp(-qq.y/L,0.0,1.0);
+  return length(qq-vec3(0.0,-L*h,0.0))-mix(0.045,0.052,h*h);
+}
+
+vec2 map(vec3 p){
+  // torso + legs + boots
+  float torso=sdRCyl(p-vec3(0.0,0.385,0.0),0.158,0.055,0.15);
+  vec3 sp=p; sp.x=abs(sp.x); sp.y-=(p.x>0.0?uFootL:uFootR);
+  float leg=sdCap(sp,vec3(0.076,0.1,0.01),vec3(0.076,0.27,0.0),0.061);
+  float boot=max(sdEll(sp-vec3(0.104,0.072,0.04),vec3(0.094,0.078,0.13)),0.006-sp.y);
+  vec2 res=vec2(torso,7.0);
+  if(leg<res.x) res.y=8.0;
+  res.x=smin(torso,leg,0.018);
+  if(boot<res.x) res.y=9.0;
+  res.x=smin(res.x,boot,0.02);
+
+  // arms
+  float aL=sdArm(armSpace(p,1.0,uArmL));
+  float aR=sdArm(armSpace(p,-1.0,uArmR));
+  if(aL<res.x) res.y=10.0;
+  res.x=smin(res.x,aL,0.012);
+  if(aR<res.x) res.y=11.0;
+  res.x=smin(res.x,aR,0.012);
+
+  // blue surface-crochet marks: ">" and "_" on the chest, "#" on the back
+  float r=0.0145;
+  float rT=r+0.005*uGlowAmt*step(abs(uGlowPart-2.0),0.1), rH=r+0.005*uGlowAmt*step(abs(uGlowPart-3.0),0.1);
+  float mk=sdCap(p,vec3(-0.090,0.422,zf(-0.090)),vec3(-0.046,0.392,zf(-0.046)),rT);
+  mk=min(mk,sdCap(p,vec3(-0.046,0.392,zf(-0.046)),vec3(-0.088,0.356,zf(-0.088)),rT));
+  mk=min(mk,sdCap(p,vec3(-0.022,0.322,zf(-0.022)),vec3(0.018,0.318,zf(0.018)),rT));
+  mk=min(mk,sdCap(p,vec3(0.018,0.318,zf(0.018)),vec3(0.058,0.324,zf(0.058)),rT));
+  if(mk<res.x) res=vec2(mk,12.0);
+  vec3 bq=p; bq.x=abs(bq.x);
+  float bk=sdCap(bq,vec3(0.024,0.305,-zf(0.024)),vec3(0.024,0.45,-zf(0.024)),rH);
+  bk=min(bk,sdCap(bq,vec3(0.0,0.405,-zf(0.0)),vec3(0.078,0.405,-zf(0.078)),rH));
+  bk=min(bk,sdCap(bq,vec3(0.0,0.35,-zf(0.0)),vec3(0.078,0.35,-zf(0.078)),rH));
+  if(bk<res.x) res=vec2(bk,13.0);
+
+  // head (rig space)
+  vec3 q=headSpace(p);
+  vec3 hq=q-vec3(0.0,0.745,0.0);
+  // one round head; the light face is the front cap of the same sphere, edged by a thin raised cord
+  float shell=sdEll(hq,vec3(0.27,0.262,0.258));
+  vec3 tq=hq-vec3(0.0,0.0,0.159); tq.x/=1.03;
+  float rim=sdTor(tq,0.206,0.016);
+  float isFace=step(0.616,hq.z/0.258/max(length(hq/vec3(0.27,0.262,0.258)),1e-4));
+  vec2 hr=vec2(shell,isFace>0.5?2.0:1.0);
+  if(rim<shell) hr.y=14.0;
+  hr.x=smin(shell,rim,0.012);
+  // safety eyes
+  vec3 eq=hq; float s=sign(eq.x); eq.x=abs(eq.x);
+  vec3 ec=eq-vec3(0.127,-0.032,0.221); ec.xz=r2(ec.xz,0.47); ec.yz=r2(ec.yz,-0.12);
+  float sl=clamp(uSleep,0.0,1.0), ys=1.0-0.86*sl;
+  vec3 ce=ec; ce.y=(ce.y+0.004*sl-14.0*sl*ce.x*ce.x)/ys;   // closed eyes: a soft U-shaped line
+  float ring=sdEll(ec-vec3(0.0,0.0,0.004),vec3(0.042,0.042,0.009))+0.06*sl;
+  float pupil=sdEll(ce-vec3(-0.0095*(1.0-sl),0.004*(1.0-sl),0.006),vec3(0.031+0.006*sl,0.031,0.02-0.008*sl))*ys;
+  if(pupil<hr.x) hr=vec2(pupil,3.0);
+  if(ring<hr.x) hr=vec2(ring,4.0);
+  // antenna
+  vec3 a=antSpace(q);
+  float stalk=sdCap(a,vec3(0.0,-0.02,0.0),vec3(0.0,0.14,0.0),0.031);
+  vec3 pa=a-vec3(0.0,0.228,0.0);
+  float pom=sdEll(pa,vec3(0.094,0.104,0.094));
+  pom-=0.0075*sin(52.0*pa.x+1.3)*sin(49.0*pa.y)*sin(53.0*pa.z+2.1)+0.004*sin(97.0*pa.x)*sin(91.0*pa.y+1.0)*sin(95.0*pa.z);
+  float ant=smin(stalk,pom,0.03);
+  if(ant<hr.x) hr=vec2(ant,pom<stalk?6.0:5.0);
+
+  if(hr.x<res.x) res=hr;
+  return res;
+}
+
+vec3 calcNormal(vec3 p){
+  const vec2 k=vec2(1.0,-1.0); const float e=0.0007;
+  return normalize(k.xyy*map(p+k.xyy*e).x+k.yyx*map(p+k.yyx*e).x+k.yxy*map(p+k.yxy*e).x+k.xxx*map(p+k.xxx*e).x);
+}
+
+// ---- crochet stitch coordinates: rounds with a whole number of stitches per row ----
+vec2 sphereRows(vec3 n,float R,float ang){
+  float th=acos(clamp(n.y,-1.0,1.0));        // from the round's start pole
+  float v=th*R/RH; float rc=(floor(v)+0.5)*RH/R;
+  float N=max(floor(TAU*R*sin(rc)/SW+0.5),5.0);
+  return vec2((ang/TAU+0.5)*N,v);
+}
+vec2 suv(vec3 p,float id){
+  if(id<1.5){ // head: rounds start at the back of the head
+    vec3 hq=headSpace(p)-vec3(0.0,0.745,0.0);
+    vec3 n=normalize(hq/vec3(0.27,0.262,0.258));
+    return sphereRows(vec3(n.x,-n.z,n.y),0.26,atan(n.x,n.y));
+  }
+  if(id>13.5){ // rim around the face
+    vec3 tq=headSpace(p)-vec3(0.0,0.745,0.159); tq.x/=1.03;
+    float a=atan(tq.x,-tq.y); float b=atan(tq.z,length(tq.xy)-0.206);
+    float N=floor(TAU*0.245/SW+0.5);
+    return vec2((a/TAU+0.5)*N,(b+PI)*0.034/RH*1.3);
+  }
+  if(id<2.5){ // face: rounds on the sphere, starting at the centre of the face
+    vec3 hq=headSpace(p)-vec3(0.0,0.745,0.0);
+    vec3 n=normalize(hq/vec3(0.27,0.262,0.258));
+    return sphereRows(vec3(n.x,n.z,-n.y),0.26,atan(n.x,-n.y));
+  }
+  if(id<5.5){ vec3 a=antSpace(headSpace(p)); return vec2((atan(a.x,a.z)/TAU+0.5)*5.0,a.y/RH); }
+  if(id<7.5){ return vec2((atan(p.x,-p.z)/TAU+0.5)*floor(TAU*0.158/SW+0.5),p.y/RH); }
+  if(id<8.5){ float s=sign(p.x); return vec2((atan(p.x-s*0.076,-p.z)/TAU+0.5)*9.0,(p.y-(p.x>0.0?uFootL:uFootR))/RH); }
+  if(id<9.5){ vec3 bp=p; bp.x=abs(bp.x); bp.y-=(p.x>0.0?uFootL:uFootR); vec3 n=normalize((bp-vec3(0.104,0.072,0.04))/vec3(0.094,0.078,0.13));
+    return sphereRows(vec3(n.x,-n.y,n.z),0.11,atan(n.x,n.z)); }
+  if(id<11.5){ float s=id<10.5?1.0:-1.0; vec3 q=armSpace(p,s,id<10.5?uArmL:uArmR);
+    return vec2((atan(q.x,q.z)/TAU+0.5)*8.0,-q.y/RH); }
+  return vec2(0.0);
+}
+vec2 stitchCell(vec2 uv){ float ri=floor(uv.y); return floor(vec2(uv.x+ri*0.38,uv.y)); }
+float stitchH(vec2 uv){
+  float ri=floor(uv.y);
+  vec2 g=vec2(uv.x+ri*0.38,uv.y);
+  vec2 c=floor(g); vec2 f=fract(g)-0.5;
+  float sz=0.9+0.2*hash(c);
+  // a single crochet stitch reads as a plump "V": two loops leaning together
+  vec2 l=f-vec2(-0.12,0.0); l=r2(l,-0.22);
+  vec2 rr=f-vec2(0.12,0.0); rr=r2(rr,0.22);
+  float a=1.0-dot(l/vec2(0.27*sz,0.48),l/vec2(0.27*sz,0.48));
+  float b=1.0-dot(rr/vec2(0.27*sz,0.48),rr/vec2(0.27*sz,0.48));
+  float h=max(sqrt(max(a,0.0)),sqrt(max(b,0.0)));
+  return h;
+}
+float fuzz(vec2 uv){ return texture2D(uFuzz,uv*0.42).r; }
+float fuzz3(vec3 p,vec3 n){ vec3 w=abs(n); w/=w.x+w.y+w.z;
+  return texture2D(uFuzz,p.yz*5.0).r*w.x+texture2D(uFuzz,p.zx*5.0).r*w.y+texture2D(uFuzz,p.xy*5.0).r*w.z; }
+float knitH(vec2 uv,float id){ float h=stitchH(uv); if(id>1.5&&id<2.5) h=mix(0.55,h,smoothstep(0.8,2.2,uv.y)); return h; }
+float hgtAt(vec3 p,float id){ vec2 uv=suv(p,id); return knitH(uv,id)+(fuzz(uv)-0.5)*0.55; }
+
+float softShadow(vec3 ro,vec3 rd){
+  float res=1.0,t=0.012;
+  for(int i=0;i<26;i++){ float h=map(ro+rd*t).x; res=min(res,9.0*h/t); t+=clamp(h,0.012,0.09); if(res<0.02||t>1.3) break; }
+  return clamp(res,0.0,1.0);
+}
+float calcAO(vec3 p,vec3 n){
+  float o=0.0,s=1.0;
+  for(int i=0;i<5;i++){ float h=0.012+0.035*float(i); o+=(h-map(p+n*h).x)*s; s*=0.75; }
+  return clamp(1.0-2.2*o,0.0,1.0);
+}
+// 1 antenna, 2 terminal (chest), 3 hash (back), 4 left boot, 5 right boot, 6 head, 7 left arm, 8 right arm
+float glowOf(float id,vec3 p){
+  if(id>4.5&&id<6.5) return 1.0;   // antenna stalk + pompom
+  if(id>11.5&&id<12.5) return 2.0; // >_ marks
+  if(id>12.5&&id<13.5) return 3.0; // # mark
+  if(id>8.5&&id<9.5) return p.x>0.0?4.0:5.0; // boots only
+  return 0.0;
+}
+float partOf(float id,vec3 p){
+  if(id>4.5&&id<6.5) return 1.0;
+  if(id<4.5||id>13.5) return 6.0;
+  if(id>6.5&&id<7.5) return p.z>=0.0?2.0:3.0;
+  if(id>11.5&&id<12.5) return 2.0;
+  if(id>12.5&&id<13.5) return 3.0;
+  if(id>9.5&&id<10.5) return 7.0;
+  if(id>10.5&&id<11.5) return 8.0;
+  return p.x>0.0?4.0:5.0;
+}
+vec3 lin(vec3 c){return c*c;}
+
+void main(){
+  vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y;
+  vec3 ww=normalize(uTarget-uCam),uu=normalize(cross(ww,vec3(0.0,1.0,0.0))),vv=cross(uu,ww);
+  vec3 rd=normalize(uv.x*uu+uv.y*vv+1.9*ww);
+  vec3 ro=uCam-vec3(0.0,uHop,0.0);
+  ro.xz=r2(ro.xz,uRot); rd.xz=r2(rd.xz,uRot);
+  vec3 roW=ro, rdW=rd;   // floor stays level even when the body tilts
+  ro.xy=r2(ro.xy,-uRoll); rd.xy=r2(rd.xy,-uRoll);
+  vec3 L1=normalize(vec3(0.55,0.85,0.85)); L1.xz=r2(L1.xz,uRot);
+  vec3 L2=normalize(vec3(-0.8,0.25,0.5));  L2.xz=r2(L2.xz,uRot);
+  vec3 L3=normalize(vec3(-0.2,0.5,-1.0));  L3.xz=r2(L3.xz,uRot);
+  L1.xy=r2(L1.xy,-uRoll); L2.xy=r2(L2.xy,-uRoll); L3.xy=r2(L3.xy,-uRoll);
+
+  // bounding sphere around the plushie
+  vec3 oc=ro-vec3(0.0,0.66,0.0);
+  float b=dot(oc,rd),c=dot(oc,oc)-0.76*0.76,disc=b*b-c;
+  float t=1e9; vec2 h=vec2(1.0,0.0); bool hit=false;
+  if(disc>0.0){
+    float sq=sqrt(disc); t=max(-b-sq,0.0); float tf=-b+sq;
+    for(int i=0;i<140;i++){
+      h=map(ro+rd*t);
+      if(h.x<0.0006*t){hit=true;break;}
+      t+=h.x*0.85;
+      if(t>tf) break;
+    }
+  }
+  if(uPick>0.5){ gl_FragColor=vec4(hit?partOf(h.y,ro+rd*t)/255.0:0.0,0.0,0.0,1.0); return; }
+
+  if(!hit){
+    // soft contact shadow on an invisible floor
+    float tp=(-uHop-roW.y)/rdW.y;
+    if(rdW.y<0.0&&tp>0.0){
+      vec3 fw=roW+rdW*tp;
+      float r=length(fw.xz);
+      vec3 fp=fw; fp.xy=r2(fp.xy,-uRoll);
+      if(r<0.9){
+        float lift=clamp(1.0-uHop*4.0,0.35,1.0);
+        vec2 q=(fw.xz-vec2(0.0,0.03))/vec2(0.30,0.27);
+        float blob=exp(-2.2*dot(q,q))*0.30*lift;                 // soft shadow under the body
+        float d=map(fp+vec3(0.0,0.025,0.0)).x;
+        float contact=(1.0-smoothstep(0.0,0.11,d))*0.38*lift;    // darker right under the boots
+        float a=clamp(blob+contact,0.0,0.6)*(1.0-smoothstep(0.55,0.9,r));
+        gl_FragColor=vec4(0.0,0.0,0.0,a); return;
+      }
+    }
+    gl_FragColor=vec4(0.0); return;
+  }
+
+  vec3 p=ro+rd*t; float id=h.y; vec3 n=calcNormal(p); vec3 V=-rd;
+  float part=partOf(id,p);
+
+  vec3 DARK=lin(vec3(0.40,0.38,0.38)), LIGHT=lin(vec3(0.64,0.6,0.56)), BLUE=lin(vec3(0.38,0.68,0.94));
+  vec3 base=DARK; float groove=1.0; float spec=0.0; float rough=1.0; float sheenK=1.0;
+  bool knit=(id<2.5)||(id>4.5&&id<5.5)||(id>6.5&&id<11.5)||(id>13.5);
+
+  if(knit){
+    vec2 st=suv(p,id);
+    float fz=fuzz(st);
+    float h0=knitH(st,id)+(fz-0.5)*0.55;
+    const float e=0.0022;
+    vec3 g=vec3(hgtAt(p+vec3(e,0.0,0.0),id)-h0,hgtAt(p+vec3(0.0,e,0.0),id)-h0,hgtAt(p+vec3(0.0,0.0,e),id)-h0)/e;
+    n=normalize(n-0.013*(g-dot(g,n)*n));
+    groove=mix(0.30,1.0,clamp(h0,0.0,1.0));
+    vec2 cell=stitchCell(st); float hv=hash(cell);
+    float tint=0.9+0.2*hv;
+    if(id<1.5||id>13.5) base=DARK;
+    else if(id<2.5) base=LIGHT;
+    else if(id<5.5) base=mix(LIGHT,DARK,0.55+0.4*step(0.5,hv));
+    else if(id<7.5) base=mix(LIGHT,DARK,smoothstep(0.272,0.30,p.y+(hv-0.5)*0.03));
+    else if(id<8.5) base=mix(LIGHT,DARK,step(0.86,hv)*0.5);
+    else if(id<9.5) base=DARK;
+    else {
+      float s=id<10.5?1.0:-1.0; vec3 q=armSpace(p,s,id<10.5?uArmL:uArmR);
+      float along=-q.y/0.215;
+      float stripe=step(0.5,fract((cell.x+cell.y)*0.5));
+      base=(along<0.8&&stripe>0.5)?BLUE:LIGHT;
+    }
+    base*=tint*(0.82+0.36*fz);
+  } else if(id>5.5&&id<6.5){ // pompom: loose chenille fluff
+    float fz=fuzz3(p,n);
+    base=BLUE*(0.78+0.5*fz); groove=mix(0.55,1.0,fz); sheenK=1.3;
+    vec3 g=vec3(fuzz3(p+vec3(0.004,0.0,0.0),n),fuzz3(p+vec3(0.0,0.004,0.0),n),fuzz3(p+vec3(0.0,0.0,0.004),n))-fz;
+    n=normalize(n-1.2*(g-dot(g,n)*n));
+  } else if(id>11.5&&id<13.5){ // blue surface crochet
+    float fz=fuzz3(p,n);
+    base=BLUE*(0.78+0.45*fz); groove=mix(0.5,1.0,fz); sheenK=1.2;
+    vec3 g=vec3(fuzz3(p+vec3(0.003,0.0,0.0),n),fuzz3(p+vec3(0.0,0.003,0.0),n),fuzz3(p+vec3(0.0,0.0,0.003),n))-fz;
+    n=normalize(n-1.4*(g-dot(g,n)*n));
+  } else if(id<3.5){ // black safety eye
+    base=vec3(0.006); spec=1.0; rough=0.15; sheenK=0.0; groove=1.0;
+  } else { // glittery blue ring
+    vec3 cell=floor(p*900.0); float sp=hash(cell.xy+cell.z*7.1);
+    base=lin(uRingCol)*0.32; spec=0.6; rough=0.35; sheenK=0.0;
+    base+=vec3(step(0.86,sp))*(0.5+0.5*sin(uTime*3.0+sp*40.0))*0.5;
+  }
+
+  float ao=calcAO(p,n)*groove;
+  float sh=softShadow(p+n*0.004,L1);
+  float d1=clamp((dot(n,L1)+0.3)/1.3,0.0,1.0);
+  float d2=clamp((dot(n,L2)+0.3)/1.3,0.0,1.0);
+  float d3=clamp(dot(n,L3),0.0,1.0);
+  vec3 sky=mix(vec3(0.16,0.15,0.22),vec3(0.50,0.55,0.72),n.y*0.5+0.5);
+  float fres=pow(1.0-clamp(dot(n,V),0.0,1.0),3.0);
+  vec3 col=base*(vec3(1.05,1.0,0.92)*d1*mix(0.35,1.0,sh)*mix(0.6,1.0,groove)+vec3(0.30,0.34,0.46)*d2+0.42*sky*ao);
+  col+=fres*sheenK*0.30*mix(base,vec3(1.0),0.35)*ao;           // velvety chenille sheen
+  col+=vec3(0.45,0.55,0.75)*d3*0.25*sheenK*ao*fres*2.0;          // cool rim light
+  if(spec>0.0){
+    vec3 H=normalize(L1+V);
+    float sp=pow(clamp(dot(n,H),0.0,1.0),mix(400.0,30.0,rough))*mix(6.0,1.5,rough)*sh;
+    vec3 R=reflect(-V,n);
+    vec3 env=mix(vec3(0.06,0.06,0.1),vec3(0.75,0.78,0.9),smoothstep(-0.1,0.6,R.y));
+    col+=spec*(sp+env*mix(0.35,0.08,rough)*(0.04+fres));
+  }
+  if(glowOf(id,p)==uGlowPart&&uGlowAmt>0.0){ vec3 gc=lin(uGlowCol); float lum=dot(col,vec3(0.3,0.59,0.11));
+    vec3 sat=gc*1.1; col=mix(col,sat*(0.3+1.3*lum),0.9*uGlowAmt)+sat*uGlowAmt*(0.04+0.25*fres); }
+
+  col=(col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
+  col=pow(clamp(col,0.0,1.0),vec3(1.0/2.2));
+  gl_FragColor=vec4(col,1.0);
+}
+</script>
+
+<script>
+/* ============================================================
+   Robi: NFC robot friend. Everything a grown-up may want to
+   change lives in the tables right below (texts are EN + MT).
+   ============================================================ */
+const T = (en, mt) => ({en, mt});
+const DEFAULT_NAME = "Robi";
+const FUZZ_PNG = "data:image/png;base64,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";
+const MIME = "application/x-robi+json";     // our record on each tag; other records are kept
+
+const GADGETS = {
+  antenna: {ico:"antenna", ink:"#a77b00", tone:523, color:"#ffe066", name:T("Antenna","Antenna"),
+            found:T("You found my Antenna! It picks up signals from space!","Sibt l-Antenna tiegħi! Tiġbor sinjali mill-ispazju!"), anim:"wobble"},
+  terminal:{ico:"terminal", ink:"#1f9d63", tone:659, color:"#8ff0b0", name:T("Terminal","Terminal"),
+            found:T("You found my Terminal! I type with it: beep beep!","Sibt it-Terminal tiegħi! Bih nikteb: bip bip!"), anim:"jump"},
+  hash:    {ico:"hash", ink:"#cf5a14", tone:784, color:"#ffa266", name:T("Secret Hash","Hash Sigriet"),
+            found:T("You found my secret Hash! Shhh, it's a code!","Sibt il-Hash sigriet tiegħi! Sss, huwa kodiċi!"), anim:"turn"},
+  bootL:   {ico:"boot", ink:"#d94f86", lr:"L", tone:440, color:"#ff8fb8", name:T("Left Rocket Boot","Stivala Rokit tax-Xellug"),
+            found:T("You found my Left Rocket Boot! Zoom!","Sibt l-Istivala Rokit tax-Xellug! Zuum!"), anim:"walk"},
+  bootR:   {ico:"boot", ink:"#6e57d6", lr:"R", tone:587, color:"#b7a6ff", name:T("Right Rocket Boot","Stivala Rokit tal-Lemin"),
+            found:T("You found my Right Rocket Boot! Zoom zoom!","Sibt l-Istivala Rokit tal-Lemin! Zuum zuum!"), anim:"walk"}
+};
+const GKEYS = Object.keys(GADGETS);
+const SVG = d => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  antenna: SVG('<circle cx="12" cy="7" r="3"/><path d="M12 10v10M8 20h8"/><path d="M6.5 4a7 7 0 0 0 0 6M17.5 4a7 7 0 0 1 0 6"/>'),
+  terminal: SVG('<rect x="3" y="4" width="18" height="16" rx="3.5"/><path d="M7.5 9.5l3 2.5-3 2.5M12.5 15H17"/>'),
+  hash: SVG('<path d="M9.5 4L7.5 20M16.5 4l-2 16M5 9h15M4 15h15"/>'),
+  boot: SVG('<path d="M7.5 3h5.5v8l5.4 2.3A3 3 0 0 1 20 16v3H5V5.5A2.5 2.5 0 0 1 7.5 3z"/><path d="M5 16h15"/>'),
+  explore: SVG('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>'),
+  memory: SVG('<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>'),
+  play: SVG('<path d="M9 18V5.5l11-2.5v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'),
+  feel: SVG('<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>'),
+  joke: SVG('<circle cx="12" cy="12" r="9"/><path d="M7.8 13.5a4.3 4.3 0 0 0 8.4 0z" fill="currentColor"/><path d="M8.3 9.8l1.7-1.2 1.2 1.5M15.7 9.8L14 8.6l-1.2 1.5"/>'),
+  back: SVG('<path d="M15 5l-7 7 7 7"/>')
+};
+
+/* Command line: two scans, in any order */
+const COMMANDS = [
+  {a:"bootL",  b:"bootR",   act:"walk",  say:T("Walk!","Imxi!")},
+  {a:"antenna",b:"boot",    act:"jump",  say:T("Jump!","Aqbeż!")},
+  {a:"antenna",b:"hash",    act:"spin",  say:T("Spin!","Dur!")},
+  {a:"antenna",b:"terminal",act:"dance", say:T("Dance!","Iżfen!")},
+  {a:"terminal",b:"boot",   act:"wave",  say:T("Wave hello!","Xejjer!")},
+  {a:"hash",   b:"boot",    act:"run",   say:T("Run!","Iġri!")},
+  {a:"terminal",b:"hash",   act:"sleep", say:T("Sleep… zzz","Orqod… zzz")}
+];
+
+const JOKES = [
+  [T("What does a cow say?","Il-baqra x'tgħid?"), T("Moo! And a robot cow says… BEEP-MOO!","Muu! U l-baqra robot tgħid… BIP-MUU!")],
+  [T("Knock knock! Who's there? Robot!","Tok tok! Min hu? Robot!"), T("Robot who? Ro-BOOP! Boop on your nose!","Robot min? Ro-BUP! Bup fuq l-imnieħer!")],
+  [T("Why is the robot so happy?","Għaliex ir-robot ferħan?"), T("Because it has a friend like YOU!","Għax għandu ħabib bħalek!")],
+  [T("What does a robot eat for breakfast?","Ir-robot x'jiekol għall-kolazzjon?"), T("Chips! Crunch crunch!","Ċipps! Krank krank!")],
+  [T("The robot wanted to be a duck…","Ir-robot ried isir papra…"), T("Beep… beep… QUACK!","Bip… bip… KWAK!")],
+  [T("What is the robot's favourite dance?","X'inhu l-iżfin favorit tar-robot?"), T("The ROBOT dance, of course!","L-iżfin tar-robot, naturalment!")],
+  [T("What sound does a sleepy robot make?","Robot bi ngħas x'ħoss jagħmel?"), T("Beep… beep… ZZZ!","Bip… bip… ZZZ!")],
+  [T("Why did the robot wear boots?","Għaliex ir-robot libes l-istivali?"), T("To stomp in the puddles! Splash!","Biex jaqbeż fl-għadajjar! Xprakk!")]
+];
+
+const FEELINGS = [
+  {ico:"😊", t:T("Happy","Kuntent"), reply:T("Yay! Me too! My battery is full!","Jaa! Jien ukoll! Il-batterija tiegħi mimlija!"), act:"dance"},
+  {ico:"😢", t:T("Sad","Għandi dwejjaq"), reply:T("Oh no! Here is a big robot hug!","Oħ le! Ħa tgħanniqa kbira tar-robot!"), act:"hug"},
+  {ico:"😴", t:T("Sleepy","Bi ngħas"), reply:T("Me too… beep… boop… zzz","Jien ukoll… bip… bup… zzz"), act:"sleep"},
+  {ico:"🍌", t:T("Hungry","Bil-ġuħ"), reply:T("I eat electricity! Yum yum! What do you eat?","Jien niekol l-elettriku! Mmm! U int x'tiekol?"), act:"jump"},
+  {ico:"🤩", t:T("I want to play!","Irrid nilgħab!"), reply:T("Let's dance!","Ejja niżfnu!"), act:"dance"}
+];
+
+const POKES = [T("Beep!","Bip!"),T("Boop!","Bup!"),T("Hehe, that tickles!","Hehe, qed tiddeqdaqni!"),T("Wheee!","Wiii!"),T("Bzzzt!","Bżżżt!"),T("Beep boop beep!","Bip bup bip!")];
+
+const UI = {
+  wake:T("Tap me to wake me up!","Messni biex inqum!"),
+  letsPlayQ:T("Let's play?!","Nilagħbu?!"),
+  sleeping:T("Zzz… zzz…","Zzz… zzz…"),
+  next:T("Next","Li jmiss"),
+  menu:T("Menu","Menu"),
+  playGame:T("Want to play a game?","Trid tilgħab logħba?"),
+  explore:T("Explore my gadgets","Esplora l-aġġeġġi tiegħi"),
+  memory:T("Memory test","Test tal-memorja"),
+  hash:T("Break the Hash","Ikser il-Hash"),
+  cmd:T("Command line","Linja tal-kmand"),
+  play:T("Play with me","Ilgħab miegħi"),
+  feel:T("How are you?","Kif int?"),
+  joke:T("Tell me a joke","Għidli ċajta"),
+  howMany:T("How many?","Kemm?"),
+  again:T("Play again","Erġa' ilgħab"),
+  another:T("Another one!","Oħra!"),
+  saveTag:T("Save to my antenna","Issejvja fl-antenna tiegħi"),
+  saveTagSub:T("Hold the phone near the antenna","Qarreb it-telefon lejn l-antenna"),
+  savePhone:T("Save on this phone","Issejvja fuq dan it-telefon"),
+  ok:T("That's me!","Dak jien!"),
+  letsPlay:T("Let's play!","Ejja nilagħbu!"),
+  hint:T("Drag to spin me · tap me to play","Kaxkarni biex indur · messni biex nilagħbu"),
+  holdPhone:T("Hold the phone near my antenna…","Qarreb it-telefon lejn l-antenna tiegħi…"),
+  scanTo:(g)=>T(`Scan my ${GADGETS[g].name.en} to start!`, `Skennja ${art(g)} tiegħi biex nibdew!`)
+};
+// Maltese article for each gadget name (used in "scan my …")
+function art(g){ return {antenna:"l-Antenna",terminal:"it-Terminal",hash:"il-Hash",bootL:"l-Istivala tax-Xellug",bootR:"l-Istivala tal-Lemin"}[g]; }
+
+/* ---------------- storage ---------------- */
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch{return d}},
+          set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let lang = LS.get("robi-lang","both");
+let voiceOn = LS.get("robi-voice",false);
+let robotName = LS.get("robi-name","");
+let friendName = LS.get("robi-friend","");
+let onboarded = LS.get("robi-onboarded",false);
+let tapScans = LS.get("robi-tapscans",true);
+let prefs = LS.get("robi-prefs",{mem:3,hash:4});
+const N = () => robotName || DEFAULT_NAME;
+const F = () => friendName || "friend";
+const FM = () => friendName || "ħabib";
+function cleanName(n){ return String(n||"").replace(/[<>&"'`\\]/g,"").trim().slice(0,20); }
+
+/* ---------------- text rendering ---------------- */
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function tx(t){
+  if(typeof t==="string") return `<span class="t-en">${esc(t)}</span>`;
+  const en=`<span class="t-en">${esc(t.en)}</span>`, mt=`<span class="t-mt" lang="mt">${esc(t.mt)}</span>`;
+  return lang==="en"?en:lang==="mt"?mt:en+mt;
+}
+const $ = id => document.getElementById(id);
+let lastSaid = null;
+function say(t, opts={}){
+  lastSaid = t;
+  const b=$("bubble"); b.innerHTML = tx(t); b.classList.toggle("solo", lang!=="both");
+  b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+  if(document.body.classList.contains("compact")){ const a=$("avatar"); a.classList.remove("talk"); void a.offsetWidth; a.classList.add("talk"); }
+  if(voiceOn) speak(t);
+  saveSession();
+}
+function speak(t){
+  try{
+    if(!("speechSynthesis" in window) || !t) return;
+    speechSynthesis.cancel();
+    const voices=speechSynthesis.getVoices();
+    const mtVoice=voices.find(v=>/^mt/i.test(v.lang));
+    const q=[];
+    if(lang!=="mt") q.push([t.en,"en-GB",null]);
+    if(lang!=="en" && mtVoice) q.push([t.mt,"mt-MT",mtVoice]);
+    q.forEach(([s,l,v])=>{ const u=new SpeechSynthesisUtterance(s.replace(/[#*]/g,"")); u.lang=l; if(v) u.voice=v; u.rate=0.95; u.pitch=1.3; speechSynthesis.speak(u); });
+  }catch{}
+}
+
+/* ---------------- sound ---------------- */
+let actx=null;
+function ac(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch{} return actx; }
+function tone(f,dur=0.12,type="square",when=0,vol=0.1){
+  const a=ac(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+when;
+  o.type=type; o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+0.02);
+}
+function chirp(f0,f1,dur=0.25,type="square",when=0,vol=0.09){
+  const a=ac(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+when;
+  o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+0.02);
+}
+const jingle=(notes,step=0.12)=>notes.forEach((f,i)=>tone(f,step*0.95,"square",i*step));
+const SFX={
+  win:()=>jingle([523,659,784,1047,784,1047],0.13),
+  wrong:()=>{tone(196,0.18,"sawtooth",0,0.08);tone(147,0.3,"sawtooth",0.17,0.08);},
+  ok:()=>jingle([784,1047],0.09),
+  wake:()=>{chirp(200,900,0.35);jingle([523,784],0.12);},
+  save:()=>{for(let i=0;i<10;i++) tone(300+Math.random()*900,0.07,"square",i*0.13,0.07);},
+  noise:()=>{const r=Math.random();
+    if(r<.25) chirp(300,1400,0.25); else if(r<.5) chirp(1400,300,0.3);
+    else if(r<.75) {tone(880,0.1);tone(440,0.14,"square",0.12);} else {tone(110,0.25,"sawtooth",0,0.07);tone(1320,0.08,"square",0.26);}},
+  laugh:()=>{for(let i=0;i<5;i++) chirp(700+i*40,500,0.09,"square",i*0.12,0.07);},
+  snore:()=>{chirp(120,90,0.6,"sawtooth",0,0.06);chirp(90,140,0.5,"sawtooth",0.8,0.05);}
+};
+function buzz(ms=60){ if(navigator.vibrate) try{navigator.vibrate(ms)}catch{} }
+
+/* ============================================================
+   3D plushie (WebGL ray-marched, no libraries)
+   ============================================================ */
+const PICK_IDS=["antenna","terminal","hash","bootL","bootR","head","armL","armR"];
+let R=null;
+(function build3D(){
+  const stage=$("stage");
+  const fail=msg=>stage.insertAdjacentHTML("beforeend",`<div class="nogl">${msg}</div>`);
+  const canvas=document.createElement("canvas"); stage.prepend(canvas);
+  const gl=canvas.getContext("webgl",{premultipliedAlpha:true,alpha:true,antialias:false});
+  if(!gl){ canvas.remove(); fail("🤖"); return; }
+  const vs=`attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}`;
+  function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(s));return null;}return s;}
+  const v=sh(gl.VERTEX_SHADER,vs), f=sh(gl.FRAGMENT_SHADER,$("frag").textContent);
+  if(!v||!f){ canvas.remove(); fail("🤖"); return; }
+  const prog=gl.createProgram(); gl.attachShader(prog,v); gl.attachShader(prog,f); gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){ canvas.remove(); fail("🤖"); return; }
+  gl.useProgram(prog);
+  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const al=gl.getAttribLocation(prog,"a"); gl.enableVertexAttribArray(al); gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
+  const U={}; ["uRes","uRot","uHop","uTilt","uNod","uAnt","uArmL","uArmR","uGlowPart","uGlowAmt","uPick","uTime","uGlowCol","uRingCol","uCam","uTarget","uFuzz","uRoll","uFootL","uFootR","uSleep"]
+    .forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+  const tex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,1,1,0,gl.LUMINANCE,gl.UNSIGNED_BYTE,new Uint8Array([128]));
+  const img=new Image(); img.onload=()=>{ gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,gl.LUMINANCE,gl.UNSIGNED_BYTE,img);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR); gl.generateMipmap(gl.TEXTURE_2D); texReady=true; if(window.__wantAvatar) ensureAvatar(); };
+  img.src=FUZZ_PNG; gl.uniform1i(U.uFuzz,0);
+
+  const hex=h=>{const n=parseInt(h.slice(1),16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];};
+  const DPR=window.devicePixelRatio||1, maxScale=Math.min(DPR,2.5), minScale=Math.min(DPR,1.25); let scale=Math.min(DPR,2), lastDraw=0;
+  function resize(){ const w=stage.clientWidth,h=stage.clientHeight;
+    canvas.width=Math.max(1,Math.round(w*scale)); canvas.height=Math.max(1,Math.round(h*scale)); }
+  new ResizeObserver(resize).observe(stage); resize();
+
+  const A0=1.15;
+  const st={rot:0.35,vel:0}; let P={};
+  let anim=null, glow={part:0,t0:-1e9,col:[1,1,1],dur:1600}, ring=hex("#3f8fdc"), asleep=false, eyeT=0, nextBlink=performance.now()+3000;
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let texReady=false;
+  function setUniforms(now,pick,camO){
+    const w=canvas.width,h=canvas.height,asp=w/h;
+    const dist = asp<0.85 ? 3.0/Math.max(asp,0.55)*0.85 : 2.8;
+    gl.viewport(0,0,w,h);
+    gl.uniform2f(U.uRes,w,h);
+    gl.uniform1f(U.uRot,P.rot); gl.uniform1f(U.uHop,P.hop); gl.uniform1f(U.uRoll,P.roll);
+    gl.uniform1f(U.uFootL,P.footL); gl.uniform1f(U.uFootR,P.footR); gl.uniform1f(U.uSleep,P.eyes||0);
+    gl.uniform1f(U.uTilt,P.tilt); gl.uniform1f(U.uNod,P.nod); gl.uniform1f(U.uAnt,P.ant);
+    gl.uniform1f(U.uArmL,P.armL); gl.uniform1f(U.uArmR,P.armR);
+    const gk=Math.max(0,1-(now-glow.t0)/glow.dur);
+    gl.uniform1f(U.uGlowPart,glow.part); gl.uniform1f(U.uGlowAmt,0.85*Math.min(1,gk*1.6)); gl.uniform3fv(U.uGlowCol,glow.col);
+    gl.uniform3fv(U.uRingCol, ring); gl.uniform1f(U.uTime,now/1000);
+    gl.uniform3fv(U.uCam,camO?camO.cam:[0,0.9,dist]); gl.uniform3fv(U.uTarget,camO?camO.target:[0,0.64,0]); gl.uniform1f(U.uPick,pick?1:0);
+  }
+  function pickAt(clientX,clientY){
+    const r=canvas.getBoundingClientRect();
+    const x=Math.round((clientX-r.left)/r.width*canvas.width), y=Math.round((1-(clientY-r.top)/r.height)*canvas.height);
+    setUniforms(performance.now(),true); gl.drawArrays(gl.TRIANGLES,0,3);
+    const px=new Uint8Array(4); gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+    return PICK_IDS[px[0]-1]||null;
+  }
+  let dragging=false,sx=0,sy=0,lx=0,moved=0;
+  canvas.addEventListener("pointerdown",e=>{dragging=true;sx=lx=e.clientX;sy=e.clientY;moved=0;st.vel=0;});
+  window.addEventListener("pointermove",e=>{ if(!dragging) return; const dx=e.clientX-lx; lx=e.clientX;
+    moved=Math.max(moved,Math.hypot(e.clientX-sx,e.clientY-sy)); st.rot-=dx*0.012; st.vel=-dx*0.012; });
+  window.addEventListener("pointerup",e=>{
+    if(!dragging) return; dragging=false;
+    if(moved<8 && e.target===canvas) onTouchRobot(pickAt(e.clientX,e.clientY));
+  });
+
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const DUR={wave:1600,waveL:1600,waveBoth:1700,dance:2600,jump:1200,spin:1300,walk:2600,run:2000,sleep:3200,turn:2200,wobble:1100,tilt:1100,wiggle:800,laugh:1300,hug:1800,hop:600,think:1800};
+  let frames=0,acc=0,last=performance.now();
+  function loop(now){
+    requestAnimationFrame(loop);
+    const dt=now-last; last=now;
+    if(!dragging){ st.rot+=st.vel; st.vel*=0.93; if(Math.abs(st.vel)<0.0005) st.vel=0; }
+    const idle=reduce?0:1;
+    P={rot:st.rot+Math.sin(now/1900)*0.06*idle, hop:Math.sin(now/650)*0.006*idle, roll:0, footL:0, footR:0,
+       tilt:0, nod:-0.06, ant:Math.sin(now/800)*0.03*idle,
+       armL:0.95+Math.sin(now/900)*0.04*idle, armR:0.95+Math.sin(now/900+1.5)*0.04*idle};
+    let eyeTarget=asleep?1:0;
+    if(asleep){ P.nod=0.26; P.roll=0.04; P.armL=P.armR=0.6; P.hop=Math.sin(now/1400)*0.004; P.ant=0.15; }
+    if(anim){
+      const t=Math.min((now-anim.t0)/anim.dur,1), d=1-t;
+      const env=Math.sin(Math.min(t*4,1)*Math.PI/2)*(t>0.85?(1-t)/0.15:1);
+      if(!reduce) switch(anim.type){
+        case "wave": P.armR=0.95+env*1.6+Math.sin(t*Math.PI*8)*0.28*env; P.tilt=-0.08*env; break;
+        case "waveL": P.armL=0.95+env*1.6+Math.sin(t*Math.PI*8)*0.28*env; P.tilt=0.08*env; break;
+        case "waveBoth": P.armL=0.95+env*1.7+Math.sin(t*Math.PI*8)*0.25*env; P.armR=0.95+env*1.7-Math.sin(t*Math.PI*8)*0.25*env; P.hop+=Math.abs(Math.sin(t*Math.PI*4))*0.03*env; break;
+        case "dance": { const ph=t*Math.PI*8; P.roll=Math.sin(ph)*0.12*env; P.armL=0.95+(0.8+0.6*Math.sin(ph))*env; P.armR=0.95+(0.8-0.6*Math.sin(ph))*env;
+          P.tilt=Math.sin(ph)*0.1*env; P.hop+=Math.abs(Math.sin(ph))*0.035*env; P.ant=Math.sin(ph*2)*0.3*env; P.footL=Math.max(0,Math.sin(ph))*0.03*env; P.footR=Math.max(0,-Math.sin(ph))*0.03*env; break; }
+        case "jump": P.hop+=Math.abs(Math.sin(t*Math.PI*2))*0.16*d; P.armL+=0.6*Math.abs(Math.sin(t*Math.PI*2))*d; P.armR+=0.6*Math.abs(Math.sin(t*Math.PI*2))*d; P.ant=Math.sin(t*30)*0.25*d; break;
+        case "hop": P.hop+=Math.sin(t*Math.PI)*0.06; break;
+        case "spin": P.rot+=ease(t)*Math.PI*2; P.hop+=Math.sin(t*Math.PI)*0.08; P.armL+=0.5*env; P.armR+=0.5*env; break;
+        case "walk": { const ph=t*Math.PI*8; P.footL=Math.max(0,Math.sin(ph))*0.055*env; P.footR=Math.max(0,-Math.sin(ph))*0.055*env;
+          P.roll=Math.sin(ph)*0.06*env; P.armL=0.95+Math.sin(ph)*0.3*env; P.armR=0.95-Math.sin(ph)*0.3*env; P.hop+=Math.abs(Math.sin(ph))*0.012*env; break; }
+        case "run": { const ph=t*Math.PI*14; P.footL=Math.max(0,Math.sin(ph))*0.075*env; P.footR=Math.max(0,-Math.sin(ph))*0.075*env;
+          P.roll=Math.sin(ph)*0.08*env; P.armL=0.95+Math.sin(ph)*0.55*env; P.armR=0.95-Math.sin(ph)*0.55*env; P.hop+=Math.abs(Math.sin(ph))*0.04*env; P.nod=0.08*env; P.ant=Math.sin(ph)*0.2*env; break; }
+        case "sleep": { const s=t<0.85?Math.min(t*5,1):1-(t-0.85)/0.15; eyeTarget=Math.max(eyeTarget,s); P.nod=0.3*s; P.roll=0.05*s; P.armL=0.95-0.35*s; P.armR=0.95-0.35*s; P.ant=0.2*s;
+          if(t>0.88) P.hop+=Math.sin((t-0.88)/0.12*Math.PI)*0.08; break; }
+        case "turn": P.rot+=Math.PI*Math.sin(Math.min(t*1.6,1)*Math.PI/2)*(t>0.7?1-ease((t-0.7)/0.3):1); break;
+        case "wobble": P.ant=Math.sin(t*28)*0.4*d; P.hop+=Math.sin(t*Math.PI)*0.03; break;
+        case "tilt": P.tilt=Math.sin(t*Math.PI*3)*0.2*d; P.nod=Math.sin(t*Math.PI)*0.1; break;
+        case "think": P.tilt=0.16*env; P.nod=-0.05*env; P.armR=0.95+1.3*env; P.ant=Math.sin(t*40)*0.15*env; break;
+        case "wiggle": P.roll=Math.sin(t*Math.PI*6)*0.1*d; P.ant=Math.sin(t*24)*0.2*d; break;
+        case "laugh": P.roll=Math.sin(t*Math.PI*14)*0.05*d; P.hop+=Math.abs(Math.sin(t*Math.PI*7))*0.025*d; P.nod=-0.1*Math.sin(t*Math.PI); break;
+        case "hug": P.armL=0.95+0.9*env; P.armR=0.95+0.9*env; P.nod=0.12*env; P.roll=Math.sin(t*Math.PI*4)*0.04*env; break;
+      }
+      if(t>=1) anim=null;
+    }
+    eyeT+= (eyeTarget-eyeT)*Math.min(1,dt/120);
+    let blink=0;
+    if(!asleep && !reduce){ if(now>nextBlink){ const bt=(now-nextBlink)/170; blink=bt<1?Math.sin(bt*Math.PI):0; if(bt>=1) nextBlink=now+2800+Math.random()*3500; } }
+    P.eyes=Math.max(eyeT,blink);
+    // sharp on phones: render near full resolution; when nothing much is moving, draw at ~30fps to save power
+    if(stage.clientWidth===0) return;   // 3D hidden (menu): don't draw
+    const busy=dragging||anim||st.vel!==0||(now-glow.t0)<glow.dur||P.eyes>0.01;
+    if(!busy && now-lastDraw<31) return;
+    const ddt=now-lastDraw; lastDraw=now;
+    setUniforms(now,false); gl.drawArrays(gl.TRIANGLES,0,3);
+    if(busy && ddt<200){ acc+=ddt; frames++; }
+    if(frames===45){ const avg=acc/frames; acc=0; frames=0;
+      if(avg>40 && scale>minScale){ scale=Math.max(minScale,scale*0.85); resize(); }
+      else if(avg<22 && scale<maxScale){ scale=Math.min(scale*1.1,maxScale); resize(); } }
+  }
+  requestAnimationFrame(loop);
+
+  R={
+    play(type){ anim={type,t0:performance.now(),dur:DUR[type]||1200}; },
+    glow(part,color,dur=1600){ glow={part:PICK_IDS.indexOf(part)+1,t0:performance.now(),col:hex(color),dur}; },
+    sleep(on){ asleep=on; },
+    setRot(r){ st.rot=r; },
+    // a still portrait of the head for the speech bubble, rendered by the same 3D model
+    snapshot(size=384,camO){
+      if(!texReady) return null;
+      const keepP=P, keepG=glow;
+      P={rot:0.12,hop:0,roll:0,footL:0,footR:0,tilt:0.04,nod:-0.08,ant:0,armL:0.15,armR:0.15,eyes:0};
+      glow={part:0,t0:-1e9,col:[1,1,1],dur:1};
+      canvas.width=canvas.height=size;
+      setUniforms(performance.now(),false,camO||{cam:[0,0.92,1.62],target:[0,0.9,0]});
+      gl.drawArrays(gl.TRIANGLES,0,3);
+      let url=null; try{ url=canvas.toDataURL("image/png"); }catch{}
+      P=keepP; glow=keepG; resize();
+      return url;
+    }
+  };
+})();
+
+
+let avatarURL=null;
+function ensureAvatar(){
+  if(avatarURL) return;
+  const u=R&&R.snapshot?R.snapshot():null;
+  if(u){ avatarURL=u; $("avatar").src=u; window.__wantAvatar=false; } else window.__wantAvatar=true;
+}
+
+/* ============================================================
+   NFC: read + write (read-merge-write keeps other records)
+   ============================================================ */
+/* Runs as a web page (Web NFC in Chrome on Android) or inside the native app (Capacitor + RobiNfc plugin). */
+const CAP=window.Capacitor;
+const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
+const PLATFORM=NATIVE?CAP.getPlatform():"web";
+const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
+const WEB_BASE=window.ROBI_WEB_BASE||"";
+const NFC={ok:NativeNfc?true:("NDEFReader" in window), reader:null, scanning:false, busy:false, listening:false, last:{g:null,t:0}};
+const LEGACY={chest:"terminal",back:"hash",bootl:"bootL",bootr:"bootR",antenna:"antenna",terminal:"terminal",hash:"hash"};
+function partFromText(s){ const m=String(s).match(/#([a-z]+)\s*$/i); return m?LEGACY[m[1].toLowerCase()]||null:null; }
+function decodeRec(r){ try{ return new TextDecoder(r.encoding||"utf-8").decode(r.data); }catch{ return ""; } }
+function isOurs(r){
+  if(r.recordType==="mime" && r.mediaType===MIME) return true;
+  if(r.recordType==="url" || r.recordType==="absolute-url") return !!partFromText(decodeRec(r));
+  return false;
+}
+// records in a simple shared shape: {type:"url"|"mime"|"text"|..., mediaType, data:string}
+function parseMessage(msg){
+  return parseSimple(msg.records.map(r=>({type:r.recordType==="absolute-url"?"url":r.recordType, mediaType:r.mediaType, data:decodeRec(r)})));
+}
+function parseSimple(records){
+  const out={};
+  for(const r of records||[]){
+    if(r.type==="mime" && r.mediaType===MIME){
+      try{ const j=JSON.parse(r.data); if(GADGETS[j.part]) out.part=j.part; if(j.name) out.name=j.name; if(j.friend) out.friend=j.friend; }catch{}
+    } else if(r.type==="url" && !out.part){
+      const s=r.data||""; const p=partFromText(s); if(p) out.part=p;
+      try{ const u=new URL(s); if(!out.name&&u.searchParams.get("name")) out.name=u.searchParams.get("name"); if(!out.friend&&u.searchParams.get("friend")) out.friend=u.searchParams.get("friend"); }catch{}
+    }
+  }
+  return out;
+}
+function baseUrl(){ const v=(document.getElementById("base")?.value||"").trim();
+  if(v) return v.replace(/[?#].*$/,"");
+  if(NATIVE) return WEB_BASE||"https://your-site.example/robot.html";
+  return location.protocol.startsWith("http")?location.origin+location.pathname:"https://your-site.example/robot.html"; }
+function tagUrl(g){
+  let u=baseUrl();
+  if(g==="antenna"){ const q=new URLSearchParams(); if(robotName) q.set("name",robotName); if(friendName) q.set("friend",friendName); const s=q.toString(); if(s) u+="?"+s; }
+  return u+"#"+g;
+}
+function keepRecord(r){
+  const rec={recordType:r.recordType};
+  if(r.mediaType) rec.mediaType=r.mediaType;
+  if(r.id) rec.id=r.id;
+  if(r.recordType==="text"){ rec.data=decodeRec(r); if(r.lang) rec.lang=r.lang; if(r.encoding) rec.encoding=r.encoding; }
+  else if(r.recordType==="url"||r.recordType==="absolute-url") rec.data=decodeRec(r);
+  else rec.data=r.data;
+  return rec;
+}
+function handleTagInfo(info){
+  if(info.name||info.friend) adoptNames(info);
+  if(info.part){ const now=Date.now(); if(NFC.last.g===info.part && now-NFC.last.t<1200) return; NFC.last={g:info.part,t:now}; onScan(info.part,"nfc"); }
+}
+const SCAN_MSG="Hold me near the phone · Qarrabni lejn it-telefon";
+function listenNative(){
+  if(!NativeNfc||NFC.listening) return; NFC.listening=true;
+  NativeNfc.addListener("tag",ev=>{ if(NFC.busy) return; handleTagInfo(parseSimple(ev.records)); });
+  NativeNfc.addListener("sessionEnded",()=>{ NFC.scanning=false; renderScanBtn(); });
+}
+async function startNFC(){
+  if(NativeNfc){
+    listenNative();
+    if(NFC.scanning) return;
+    try{
+      const a=await NativeNfc.isAvailable();
+      if(!a.enabled){ setStatus(T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.")); return; }
+      await NativeNfc.startScan({message:SCAN_MSG}); NFC.scanning=true; setStatus("");
+    }catch(e){ setStatus(T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.")); }
+    renderScanBtn(); return;
+  }
+  if(!NFC.ok||NFC.scanning) return;
+  try{
+    NFC.reader=new NDEFReader(); await NFC.reader.scan(); NFC.scanning=true;
+    NFC.reader.onreading=ev=>{ if(NFC.busy) return; handleTagInfo(parseMessage(ev.message)); };
+    NFC.reader.onreadingerror=()=>{ if(!NFC.busy) setStatus(T("Hold the phone still on the tag a bit longer.","Żomm it-telefon wieqaf fuq it-tag ftit iktar.")); };
+    setStatus("");
+  }catch(err){
+    setStatus(err.name==="NotAllowedError"
+      ? T("NFC is blocked. Allow it for this site in Chrome settings.","L-NFC huwa mblukkat. Ippermettih għal dan is-sit fis-settings ta' Chrome.")
+      : T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell."));
+  }
+}
+/* Write our records to a tag: first read it, keep everything that isn't ours, then write back. */
+function writeTag(g, timeoutMs=25000){
+  if(NativeNfc) return writeTagNative(g,timeoutMs);
+  return new Promise(async(resolve,reject)=>{
+    if(!NFC.ok) return reject(new Error("nonfc"));
+    NFC.busy=true;
+    const ctrl=new AbortController(); const w=new NDEFReader();
+    const done=(err)=>{ clearTimeout(to); try{ctrl.abort()}catch{} setTimeout(()=>NFC.busy=false,1500); err?reject(err):resolve(); };
+    const to=setTimeout(()=>done(new Error("timeout")),timeoutMs);
+    const payload={v:1,part:g}; if(g==="antenna"){ if(robotName) payload.name=robotName; if(friendName) payload.friend=friendName; }
+    const ours=[{recordType:"url",data:tagUrl(g)},{recordType:"mime",mediaType:MIME,data:new TextEncoder().encode(JSON.stringify(payload))}];
+    const write=async(keep)=>{ try{ await w.write({records:[...ours,...keep]},{overwrite:true}); done(); }catch(e){ done(e); } };
+    try{
+      await w.scan({signal:ctrl.signal});
+      w.onreading=ev=>{ const keep=[]; for(const r of ev.message.records){ if(!isOurs(r)) try{ keep.push(keepRecord(r)); }catch{} } write(keep); };
+      w.onreadingerror=()=>write([]);   // blank / unformatted tag
+    }catch(e){ done(e); }
+  });
+}
+async function writeTagNative(g,timeoutMs){
+  NFC.busy=true;
+  const payload={v:1,part:g}; if(g==="antenna"){ if(robotName) payload.name=robotName; if(friendName) payload.friend=friendName; }
+  const url=tagUrl(g);
+  const opts={records:[{type:"url",data:url},{type:"mime",mediaType:MIME,data:JSON.stringify(payload)}],
+    compact:[{type:"url",data:url}],              // used when the tag is too small (e.g. NTAG213)
+    mime:MIME, ourUrlRegex:"#(antenna|terminal|hash|bootl|bootr|chest|back)\\s*$",
+    message:"Hold the tag near the phone · Qarreb it-tag lejn it-telefon"};
+  let to;
+  try{
+    return await Promise.race([NativeNfc.writeMerged(opts), new Promise((_,rej)=>{ to=setTimeout(()=>rej(new Error("timeout")),timeoutMs); })]);
+  }catch(e){ try{ await NativeNfc.cancelWrite(); }catch{} throw e; }
+  finally{ clearTimeout(to); setTimeout(()=>{ NFC.busy=false; if(PLATFORM==="android"&&!NFC.scanning) startNFC(); },1500); }
+}
+/* iPhone: the system NFC sheet only opens from a tap, so the app shows a Scan button */
+function renderScanBtn(){
+  const b=$("scanBtn"); if(!b) return;
+  b.hidden=!(PLATFORM==="ios" && !NFC.scanning && S.screen!=="wake");
+  b.innerHTML=ICON.antenna+tx(T("Scan","Skennja"));
+}
+function adoptNames(info){
+  let changed=false;
+  if(info.name){ const n=cleanName(info.name); if(n && n!==robotName){ robotName=n; LS.set("robi-name",n); changed=true; } }
+  if(info.friend){ const n=cleanName(info.friend); if(n && n!==friendName){ friendName=n; LS.set("robi-friend",n); } }
+  if(changed){ applyTitle(); if(!onboarded){ onboarded=true; LS.set("robi-onboarded",true); }
+    if(S.screen!=="intro") say(T(`Beep! I remember now: my name is ${N()}!`,`Bip! Issa niftakar: jisimni ${N()}!`)); }
+}
+function setStatus(t){ $("status").innerHTML = t?tx(t):""; }
+
+/* ============================================================
+   Screens + game state
+   ============================================================ */
+let S={screen:"wake"};
+const timers=new Set();
+function later(fn,ms){ const id=setTimeout(()=>{timers.delete(id);fn();},ms); timers.add(id); return id; }
+function clearTimers(){ timers.forEach(clearTimeout); timers.clear(); }
+function saveSession(){ LS.set("robi-session",{s:S,t:Date.now()}); }
+function applyTitle(){ $("title").textContent=N(); document.title=N()+" the Robot"; }
+
+function go(screen, extra={}){ clearTimers(); S={screen,...extra}; render(); saveSession(); }
+const btn=(t,attrs="",cls="big")=>`<button class="${cls}" ${attrs}>${tx(t)}</button>`;
+const backBtn=()=>`<button class="back" data-go="menu">${ICON.back}${tx(UI.menu)}</button>`;
+function gIcon(g,plain){ const d=GADGETS[g]; return `<span class="gi"${plain?"":` style="color:${d.ink}"`}>${ICON[d.ico]}${d.lr?`<span class="lr"><b>${d.lr}</b></span>`:""}</span>`; }
+
+function render(){
+  setTimeout(renderScanBtn,0);
+  const compact=S.screen==="menu"; document.body.classList.toggle("compact",compact);
+  if(compact) ensureAvatar();
+  const p=$("panel"); let h="";
+  switch(S.screen){
+    case "wake": h=btn(UI.letsPlayQ,'data-act="wake"'); break;
+    case "intro": h=renderIntro(); break;
+    case "menu":
+      h=`<div class="menu">
+        ${menuBtn("explore","explore",UI.explore,"--t-explore")}${menuBtn("memory","memory",UI.memory,"--t-memory")}
+        ${menuBtn("hash","hash",UI.hash,"--t-hash")}${menuBtn("cmd","terminal",UI.cmd,"--t-cmd")}
+        ${menuBtn("play","play",UI.play,"--t-play")}${menuBtn("feel","feel",UI.feel,"--t-feel")}
+        <button class="tilebtn wide" style="--tc:var(--t-joke)" data-go="joke"><span class="ic">${ICON.joke}</span><span class="lbl">${tx(UI.joke)}</span></button>
+      </div>`; break;
+    case "explore": h=backBtn()+renderExplore(); break;
+    case "memory": h=backBtn()+renderMemory(); break;
+    case "hash": h=backBtn()+renderHash(); break;
+    case "cmd": h=backBtn()+renderCmd(); break;
+    case "play": h=backBtn()+`<div class="card"><div class="label">${tx(T("Touch me to hear robot noises! Scan my boots to make me move!","Messni biex tisma' ħsejjes tar-robot! Skennja l-istivali tiegħi biex nimxi!"))}</div>
+        ${btn(T("Dance party!","Festa taż-żfin!"),'data-act="party"')}</div>`; break;
+    case "feel": h=backBtn()+`<div class="feel">${FEELINGS.map((f,i)=>`<button class="big alt" data-feel="${i}"><span class="ico">${f.ico}</span>${tx(f.t)}</button>`).join("")}</div>`; break;
+    case "joke": h=backBtn()+btn(UI.another,'data-act="joke"'); break;
+  }
+  p.innerHTML=h;
+  const hintT = S.screen==="play"?T("Touch me!","Messni!"):S.screen==="wake"?UI.wake:null;
+  $("hint").innerHTML = hintT?tx(hintT):""; $("hint").hidden = !hintT;
+}
+const menuBtn=(go,ico,t,c)=>`<button class="tilebtn" style="--tc:var(${c})" data-go="${go}"><span class="ic">${ICON[ico]}</span>${tx(t)}</button>`;
+
+$("panel").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  ac();
+  if(b.dataset.go) return enter(b.dataset.go);
+  if(b.dataset.act) return ACTS[b.dataset.act]?.(b);
+  if(b.dataset.feel) return feel(+b.dataset.feel);
+  if(b.dataset.n) return setDifficulty(+b.dataset.n);
+});
+$("panel").addEventListener("submit",e=>{ e.preventDefault(); const f=e.target.closest("form"); if(f&&f.dataset.act) ACTS[f.dataset.act]?.(f); });
+
+function enter(screen){
+  switch(screen){
+    case "menu": go("menu"); say(T(`What shall we do, ${F()}?`,`X'nagħmlu, ${FM()}?`)); R?.play("hop"); break;
+    case "explore": go("explore",{found:[]}); say(T("Find my 5 secret gadgets! Hold me close to the phone.","Sib il-5 aġġeġġi sigrieti tiegħi! Qarrabni lejn it-telefon.")); R?.play("think"); break;
+    case "memory": go("memory",{phase:"start",n:prefs.mem}); say(UI.scanTo("antenna")); R?.play("wobble"); break;
+    case "hash": go("hash",{phase:"start",n:prefs.hash}); say(UI.scanTo("hash")); R?.play("turn"); break;
+    case "cmd": go("cmd",{phase:"start",first:null,log:[]}); say(UI.scanTo("terminal")); R?.play("jump"); break;
+    case "play": go("play"); say(T("Let's play! Touch me!","Ejja nilagħbu! Messni!")); R?.play("dance"); break;
+    case "feel": go("feel"); say(T(`How are you today, ${F()}?`,`Kif int illum, ${FM()}?`)); R?.play("tilt"); break;
+    case "joke": go("joke"); tellJoke(); break;
+  }
+}
+
+/* ---------------- wake + intro ---------------- */
+const INTRO=[
+  {say:()=>T("Hello! Nice to meet you! I'm your robot friend!","Bonġu! Għandi pjaċir nsir nafek! Jien il-ħabib robot tiegħek!"), anim:"wave"},
+  {say:()=>T("I can dance too!","Naf niżfen ukoll!"), anim:"dance"},
+  {say:()=>T("My name was stored in RAM, so I forgot it 😔 This time I'll do it right! What do you want to call me?",
+             "Ismi kien maħżun fir-RAM, u insejtu 😔 Din id-darba se nagħmilha sew! Kif trid issejjaħli?"), anim:"think", form:"robot"},
+  {say:()=>T("Thinking… thinking… saving… saving… beep boop!","Naħseb… naħseb… qed nissejvja… qed nissejvja… bip bup!"), anim:"think", auto:"saving"},
+  {say:()=>T(`Great! Now I remember: my name is ${N()}!`,`Bravu! Issa niftakar: jisimni ${N()}!`), anim:"jump"},
+  {say:()=>T("Hey, and what's your name?","U int, x'jismek?"), anim:"tilt", form:"friend"},
+  {say:()=>T(`${F()}?! OMG!! I can't believe I'm meeting the great ${F()}!`,`${FM()}?! Ajma!! Ma nistax nemmen li qed niltaqa' mal-leġġenda ${FM()}!`), anim:"jump"},
+  {say:()=>T("My best friend Robot knows your parents, and they talk about you all the time! You're a legend around here!",
+             "L-aqwa ħabib tiegħi, Robot, jaf lill-ġenituri tiegħek, u dejjem jitkellmu fuqek! Int leġġenda hawnhekk!"), anim:"waveBoth"},
+  {say:()=>T("Crazy!","Inkredibbli!"), anim:"laugh", auto:"next"},
+  {say:()=>T("Well… hello!","Mela… bonġu!"), anim:"wave", last:true}
+];
+function renderIntro(){
+  const s=INTRO[S.step];
+  if(s.form==="robot") return `<form class="form" data-act="saveRobot">
+      <input id="nameIn" type="text" maxlength="20" autocomplete="off" value="${esc(robotName)}" placeholder="${esc(DEFAULT_NAME)}" aria-label="Robot name">
+      ${NFC.ok?btn(UI.saveTag,'type="button" data-act="saveRobotTag"'):""}
+      ${btn(UI.savePhone,'type="submit"',NFC.ok?"big alt":"big")}</form>`;
+  if(s.form==="friend") return `<form class="form" data-act="saveFriend">
+      <input id="friendIn" type="text" maxlength="20" autocomplete="off" value="${esc(friendName)}" aria-label="Your name">
+      ${btn(UI.ok,'type="submit"')}</form>`;
+  if(s.auto) return "";
+  return s.last?btn(UI.letsPlay,'data-act="introDone"'):btn(UI.next,'data-act="introNext"');
+}
+function introStep(i){
+  clearTimers(); S={screen:"intro",step:i}; render();
+  const s=INTRO[i]; say(s.say()); if(s.anim) R?.play(s.anim);
+  if(s.auto==="saving"){ SFX.save(); later(()=>introStep(i+1),2600); }
+  if(s.auto==="next"){ SFX.laugh(); later(()=>introStep(i+1),1700); }
+  if(s.form) setTimeout(()=>{ const el=$(s.form==="robot"?"nameIn":"friendIn"); el?.focus(); },50);
+  saveSession();
+}
+const ACTS={
+  wake(){
+    R?.sleep(false); R?.play("jump"); SFX.wake(); startNFC();
+    if(!onboarded){ later(()=>introStep(0),900); }
+    else {; go("menu"); say(T(`Welcome back, ${F()}! I missed you!`,`Merħba lura, ${FM()}! Ksibtli nieqes!`)); }
+  },
+  introNext(){ introStep(S.step+1); },
+  introDone(){ onboarded=true; LS.set("robi-onboarded",true); go("menu"); say(UI.playGame); R?.play("dance"); },
+  saveRobot(){ const n=cleanName($("nameIn").value)||DEFAULT_NAME; robotName=n; LS.set("robi-name",n); applyTitle(); introStep(S.step+1); },
+  async saveRobotTag(){
+    const n=cleanName($("nameIn").value)||DEFAULT_NAME; robotName=n; LS.set("robi-name",n); applyTitle();
+    say(UI.holdPhone); R?.glow("antenna",GADGETS.antenna.color,4000);
+    try{ await writeTag("antenna"); introStep(S.step+1); }
+    catch(e){ say(T("I couldn't reach the tag, so I saved my name on this phone.","Ma stajtx nilħaq it-tag, allura ssejvjajt ismi fuq dan it-telefon.")); later(()=>introStep(S.step+1),2500); }
+  },
+  saveFriend(){ const n=cleanName($("friendIn").value); if(!n){ $("friendIn").focus(); return; } friendName=n; LS.set("robi-friend",n); introStep(S.step+1); },
+  party(){ R?.play("dance"); jingle([523,659,784,659,523,659,784,1047],0.14); say(T("Dance party! Wiggle wiggle!","Festa taż-żfin! Ħarrek, ħarrek!")); },
+  joke(){ tellJoke(); },
+  memStart(){ memoryBegin(); }, hashStart(){ hashBegin(); }
+};
+
+/* ---------------- scans + touches ---------------- */
+function onTouchRobot(part){
+  ac();
+  if(S.screen==="wake"){ ACTS.wake(); return; }
+  if(part && GADGETS[part] && tapScans){ onScan(part,"tap"); return; }
+  poke(part);
+}
+function poke(part){
+  SFX.noise(); buzz(30);
+  const moves=["wiggle","hop","laugh","wobble","tilt"];
+  R?.play(part==="armL"?"waveL":part==="armR"?"wave":moves[Math.floor(Math.random()*moves.length)]);
+  if(S.screen==="play"||S.screen==="menu"||S.screen==="joke"||S.screen==="feel") say(POKES[Math.floor(Math.random()*POKES.length)]);
+}
+function gadgetFlash(g,quiet){ const d=GADGETS[g]; R?.glow(g,d.color); tone(d.tone,0.18); if(!quiet) buzz(60); }
+
+function onScan(g,src){
+  ac();
+  if(S.screen==="wake"){ ACTS.wake(); return; }
+  gadgetFlash(g);
+  switch(S.screen){
+    case "explore": return exploreScan(g);
+    case "memory": return memoryScan(g);
+    case "hash": return hashScan(g);
+    case "cmd": return cmdScan(g);
+    case "play": return playScan(g);
+    case "intro": return;
+    default: say(GADGETS[g].found); R?.play(GADGETS[g].anim);
+  }
+}
+
+/* ---------------- Explore ---------------- */
+function renderExplore(){
+  return `<div class="card"><div class="tiles">${GKEYS.map(g=>{ const on=S.found.includes(g), d=GADGETS[g];
+    return `<div class="tile${on?" on":""}" style="--c:${d.ink}" aria-label="${on?esc(d.name.en):"hidden"}">${on?gIcon(g,true):"?"}</div>`; }).join("")}</div>
+    <div class="label">${tx(T(`Found ${S.found.length} of 5`,`Sibt ${S.found.length} minn 5`))}</div>
+    ${S.found.length===5?btn(UI.again,'data-go="explore"'):""}</div>`;
+}
+function exploreScan(g){
+  const d=GADGETS[g];
+  if(!S.found.includes(g)){ S.found.push(g); render(); }
+  say(d.found); R?.play(d.anim);
+  if(S.found.length===5){ later(()=>{ say(T(`Bravo, ${F()}! You found all my gadgets! You're a super explorer!`,`Bravu, ${FM()}! Sibthom kollha! Int super!`)); SFX.win(); R?.play("dance"); render(); },1800); }
+  saveSession();
+}
+
+/* ---------------- Memory ---------------- */
+function pickN(){ return `<div class="label">${tx(UI.howMany)}</div><div class="pick">${[3,4,5,6].map(n=>`<button data-n="${n}" aria-pressed="${S.n===n}">${n}</button>`).join("")}</div>`; }
+function pickNHash(){ return `<div class="label">${tx(UI.howMany)}</div><div class="pick">${[4,5,6].map(n=>`<button data-n="${n}" aria-pressed="${S.n===n}">${n}</button>`).join("")}</div>`; }
+function setDifficulty(n){ S.n=n; if(S.screen==="memory") prefs.mem=n; else prefs.hash=n; LS.set("robi-prefs",prefs); render(); saveSession(); }
+function scanBox(g){ return `<div class="scanme">${gIcon(g)}<div class="label">${tx(UI.scanTo(g))}</div></div>`; }
+function randSeq(n){ const s=[]; while(s.length<n){ const g=GKEYS[Math.floor(Math.random()*5)]; if(g!==s[s.length-1]) s.push(g); } return s; }
+
+function renderMemory(){
+  if(S.phase==="start"||S.phase==="win") return `<div class="card">${S.phase==="win"?`<div class="label">${tx(T("You did it!","Għamiltha!"))}</div>`:""}${pickN()}${scanBox("antenna")}</div>`;
+  const slots=S.seq.map((g,i)=>{ const d=GADGETS[g];
+    const lit = S.phase==="show" ? i===S.showing : i<S.pos;
+    return `<div class="slot${lit?" on":""}${S.phase==="input"&&i===S.pos?" cur":""}" style="--c:${d.ink}">${lit?gIcon(g,true):"?"}</div>`; }).join("");
+  const msg = S.phase==="show"?T("Watch carefully…","Ara sew…"):T("Your turn! Scan them in the same order.","Issa int! Skennjahom bl-istess ordni.");
+  return `<div class="card"><div class="slots">${slots}</div><div class="label">${tx(msg)}</div></div>`;
+}
+function memoryBegin(){ S.seq=randSeq(S.n); S.pos=0; memoryShow(); }
+function memoryShow(){
+  S.phase="show"; S.showing=-1; render(); say(T("Watch carefully…","Ara sew…")); R?.play("think");
+  S.seq.forEach((g,i)=>later(()=>{ S.showing=i; render(); const d=GADGETS[g]; R?.glow(g,d.color,800); tone(d.tone,0.3); },1100+i*950));
+  later(()=>{ S.phase="input"; S.showing=-1; S.pos=0; render(); say(T("Your turn! Scan them in the same order.","Issa int! Skennjahom bl-istess ordni.")); R?.play("hop"); saveSession(); },1100+S.seq.length*950+300);
+}
+function memoryScan(g){
+  if(S.phase==="start"||S.phase==="win"){ if(g==="antenna") memoryBegin(); else say(UI.scanTo("antenna")); return; }
+  if(S.phase!=="input") return;
+  if(g===S.seq[S.pos]){
+    S.pos++; render(); SFX.ok();
+    if(S.pos===S.seq.length){ S.phase="win"; render(); SFX.win(); R?.play("dance");
+      say(T(`Wow, what a memory, ${F()}! Scan my antenna to play again.`,`Wow, x'memorja, ${FM()}! Skennja l-antenna biex terġa' tilgħab.`)); }
+    else { say(T("Yes! Next one!","Iva! Li jmiss!")); R?.play("hop"); }
+  } else {
+    SFX.wrong(); buzz(200); R?.play("wiggle"); say(T("Oops! Let's watch again.","Ops! Ejja naraw mill-ġdid."));
+    S.phase="wait"; render(); later(memoryShow,1800);
+  }
+  saveSession();
+}
+
+/* ---------------- Break the Hash ---------------- */
+function renderHash(){
+  if(S.phase==="start") return `<div class="card">${pickNHash()}${scanBox("hash")}</div>`;
+  const slots=S.seq.map((g,i)=>{ const d=GADGETS[g]; const done=i<S.pos, hinted=S.known[i]&&!done;
+    return `<div class="slot${done?" on":""}${hinted?" on hintslot":""}${S.phase==="play"&&i===S.pos?" cur":""}" style="--c:${d.ink}">${done||hinted?gIcon(g,true):"#"}</div>`; }).join("");
+  const msg = S.phase==="win"?T("Hash cracked! Scan my hash to play again.","Il-hash inkiser! Skennja l-hash biex terġa' tilgħab.")
+                             :T("Find the secret code, one gadget at a time!","Sib il-kodiċi sigriet, aġġeġġ wieħed kull darba!");
+  return `<div class="card"><div class="term"><div class="prompt">$ crack --hash ${"#".repeat(S.n)}</div><div>${S.phase==="win"?"✔ 100%":`computing… ${Math.round(S.pos/S.n*100)}%`} <span class="cursor"></span></div></div>
+    <div class="slots">${slots}</div><div class="label">${tx(msg)}</div></div>`;
+}
+function hashBegin(){ S.seq=randSeq(S.n); S.pos=0; S.known=S.seq.map(()=>false); S.phase="play"; render();
+  say(T("Find the secret code! Scan a gadget. If it's right, it gets computed!","Sib il-kodiċi sigriet! Skennja aġġeġġ. Jekk huwa t-tajjeb, jiġi kkalkulat!")); R?.play("think"); saveSession(); }
+function hashScan(g){
+  if(S.phase!=="play"){ if(g==="hash") hashBegin(); else say(UI.scanTo("hash")); return; }
+  if(g===S.seq[S.pos]){
+    S.known[S.pos]=true; S.pos++; SFX.ok();
+    if(S.pos===S.n){ S.phase="win"; render(); SFX.win(); R?.play("spin");
+      say(T(`Hash cracked! You're a super hacker, ${F()}!`,`Il-hash inkiser! Int super hacker, ${FM()}!`)); }
+    else { render(); say(T("Computed! ✔ What's next?","Ikkalkulat! ✔ X'jmiss?")); R?.play("hop"); }
+  } else {
+    S.pos=0; render(); SFX.wrong(); buzz(200); R?.play("wiggle");
+    say(T("Wrong! Start again from the beginning. The ones you found stay as clues.","Ħażin! Erġa' ibda mill-bidu. Dawk li sibt jibqgħu bħala ħjiel."));
+  }
+  saveSession();
+}
+
+/* ---------------- Command line ---------------- */
+function cmdKey(g){ return g.startsWith("boot")?"boot":g; }
+function findCommand(a,b){
+  for(const c of COMMANDS){
+    const m=(x,y)=> (c.a===x||(c.a==="boot"&&x.startsWith("boot"))) && (c.b===y||(c.b==="boot"&&y.startsWith("boot")));
+    if(c.a==="bootL"&&c.b==="bootR"){ if((a==="bootL"&&b==="bootR")||(a==="bootR"&&b==="bootL")) return c; continue; }
+    if(m(a,b)||m(b,a)) return c;
+  }
+  return null;
+}
+function cmdIco(k){ return k==="boot"?`<span class="gi">${ICON.boot}</span>`:gIcon(k,true); }
+function renderCmd(){
+  if(S.phase==="start") return `<div class="card">${scanBox("terminal")}</div>`;
+  const rows=COMMANDS.map(c=>`<div class="row"><span class="k">${cmdIco(c.a)}<span class="plus">+</span>${cmdIco(c.b)}</span><span class="v">${tx(c.say)}</span></div>`).join("");
+  const line = S.first?`${gIcon(S.first,true)} <span class="plus">+</span> <span class="cursor"></span>`:`<span class="cursor"></span>`;
+  const log=(S.log||[]).slice(-2).map(l=>`<div>&gt; ${l}</div>`).join("");
+  return `<div class="term"><div>${tx(T("Scan 2 gadgets to give me a command:","Skennja 2 aġġeġġi biex tagħtini kmand:"))}</div>${rows}${log}<div class="prompt">$ ${line}</div></div>`;
+}
+function cmdScan(g){
+  if(S.phase==="start"){ if(g==="terminal"){ S.phase="ready"; S.first=null; render(); R?.play("jump"); SFX.ok();
+      say(T("Terminal ready! Scan 2 gadgets to give me a command.","It-terminal lest! Skennja 2 aġġeġġi biex tagħtini kmand.")); }
+    else say(UI.scanTo("terminal")); saveSession(); return; }
+  if(!S.first){
+    S.first=g; render(); say(T("Waiting for the second gadget…","Nistenna t-tieni aġġeġġ…"));
+    clearTimers(); later(()=>{ if(S.screen==="cmd"&&S.first){ S.first=null; render(); say(T("Too slow! Try again: 2 gadgets.","Bil-mod wisq! Erġa' pprova: 2 aġġeġġi.")); } },7000);
+  } else {
+    clearTimers(); const a=S.first; S.first=null;
+    const c=findCommand(a,g);
+    if(c){ S.log=(S.log||[]).concat(`${a} + ${g}  ✔`); render(); say(c.say); runAction(c.act); }
+    else { S.log=(S.log||[]).concat(`${a} + ${g}  ?`); render(); SFX.wrong(); R?.play("tilt");
+      say(T("Beep? I don't know that command. Try one from the list!","Bip? Ma nafx dak il-kmand. Ipprova wieħed mil-lista!")); }
+  }
+  saveSession();
+}
+function runAction(act){
+  R?.play(act);
+  if(act==="sleep") SFX.snore(); else if(act==="dance") jingle([523,659,784,659,523,659,784,1047],0.14);
+  else if(act==="walk") [0,1,2,3,4,5].forEach(i=>tone(i%2?330:262,0.08,"triangle",i*0.32));
+  else if(act==="run") [0,1,2,3,4,5,6,7,8,9].forEach(i=>tone(i%2?392:330,0.06,"triangle",i*0.16));
+  else if(act==="jump") chirp(300,1200,0.35); else if(act==="spin") chirp(400,1600,0.8,"triangle");
+  else if(act==="wave") jingle([784,988],0.15);
+}
+
+/* ---------------- Free play ---------------- */
+function playScan(g){
+  if(g.startsWith("boot")){
+    const opts=[["run",T("Zoom! Rocket boots, RUN!","Zuum! Stivali rokit, IĠRI!")],["dance",T("Rocket boots, DANCE!","Stivali rokit, IŻFNU!")],["jump",T("Boing boing! JUMP!","Boing boing! AQBEŻ!")],["walk",T("Left, right, left, right!","Xellug, lemin, xellug, lemin!")]];
+    const [act,t]=opts[Math.floor(Math.random()*opts.length)]; say(t); runAction(act);
+  } else { say(GADGETS[g].found); R?.play(GADGETS[g].anim); }
+}
+
+/* ---------------- How are you + jokes ---------------- */
+function feel(i){ const f=FEELINGS[i]; say(f.reply); R?.play(f.act); if(f.act==="sleep") SFX.snore(); else if(f.act==="dance"){ jingle([523,659,784,1047],0.13); } else if(f.act==="hug") jingle([392,523,659],0.2); else SFX.ok(); }
+let jokeIdx=-1;
+function tellJoke(){
+  clearTimers(); let i; do{ i=Math.floor(Math.random()*JOKES.length); }while(i===jokeIdx && JOKES.length>1); jokeIdx=i;
+  const [a,b]=JOKES[i]; say(a); R?.play("think"); tone(660,0.1);
+  later(()=>{ say(b); SFX.laugh(); R?.play("laugh"); },2800);
+}
+
+/* ============================================================
+   Top bar, grown-up setup, start-up
+   ============================================================ */
+function setLang(l){ lang=l; LS.set("robi-lang",l); document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===l)));
+  render(); renderSetup(); if(lastSaid){ const b=$("bubble"); b.innerHTML=tx(lastSaid); b.classList.toggle("solo",l!=="both"); } }
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.lang)));
+$("gear").addEventListener("click",()=>{ const d=$("setup"); d.open=!d.open; if(d.open) setTimeout(()=>d.scrollIntoView({behavior:"smooth",block:"start"}),30); });
+$("voice").addEventListener("click",()=>{ voiceOn=!voiceOn; LS.set("robi-voice",voiceOn); $("voice").setAttribute("aria-pressed",String(voiceOn)); if(voiceOn) speak(lastSaid); else try{speechSynthesis.cancel()}catch{} });
+
+function renderSetup(){
+  $("setupSum").innerHTML=tx(T("Grown-ups: names & tags","Għall-kbar: ismijiet u tags"));
+  const gbtn=g=>`<button data-w="${g}">${gIcon(g)} ${esc(lang==="mt"?GADGETS[g].name.mt:GADGETS[g].name.en)}</button>`;
+  $("setupBody").innerHTML=`
+    <h2>${tx(T("Names","Ismijiet"))}</h2>
+    <p><label for="setRobot">${tx(T("Robot's name","Isem ir-robot"))}</label></p>
+    <input id="setRobot" type="text" maxlength="20" value="${esc(robotName)}" placeholder="${DEFAULT_NAME}">
+    <p><label for="setFriend">${tx(T("Child's name","Isem it-tifel jew it-tifla"))}</label></p>
+    <input id="setFriend" type="text" maxlength="20" value="${esc(friendName)}">
+    <div class="row2"><button id="saveNames">${tx(T("Save on this phone","Issejvja fuq dan it-telefon"))}</button>
+      ${NFC.ok?`<button id="saveNamesTag">${gIcon("antenna")}${tx(T("Save to antenna tag","Issejvja fit-tag tal-antenna"))}</button>`:""}</div>
+    <h2>${tx(T("Write the gadget tags","Ikteb it-tags tal-aġġeġġi"))}</h2>
+    <p>${tx(T("Use Chrome on an Android phone. Tap a gadget, then hold its tag to the back of the phone. The robot's link and data are added; anything else already on the tag is kept. Left and right are the robot's own left and right.",
+              "Uża Chrome fuq telefon Android. Agħfas aġġeġġ, imbagħad qarreb it-tag tiegħu wara t-telefon. Il-link u d-data tar-robot jiżdiedu; kull ħaġa oħra fuq it-tag tinżamm. Ix-xellug u l-lemin huma tar-robot innifsu."))}</p>
+    <p><label for="base">${tx(T("Page address (your HTTPS link)","L-indirizz tal-paġna (il-link HTTPS tiegħek)"))}</label></p>
+    <input id="base" type="url" value="${esc(baseUrl())}">
+    <div class="grid" id="writeRow">${GKEYS.map(gbtn).join("")}</div>
+    <p id="writeMsg"></p>
+    <label class="chk"><input type="checkbox" id="tapScan" ${tapScans?"checked":""}> <span>${tx(T("Tapping a gadget on the screen counts as a scan","Meta tmiss aġġeġġ fuq l-iskrin jgħodd bħala skan"))}</span></label>
+    <div class="row2"><button id="replayIntro">${tx(T("Replay the introduction","Erġa' ara l-introduzzjoni"))}</button></div>`;
+}
+$("setupBody").addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b) return; ac();
+  const msg=t=>{ $("writeMsg").innerHTML=tx(t); };
+  if(b.id==="saveNames"||b.id==="saveNamesTag"){
+    robotName=cleanName($("setRobot").value); friendName=cleanName($("setFriend").value);
+    LS.set("robi-name",robotName); LS.set("robi-friend",friendName); applyTitle();
+    if(b.id==="saveNames"){ say(T(`My name is ${N()}! Hi, ${F()}!`,`Jisimni ${N()}! Bonġu, ${FM()}!`)); R?.play("wave"); return; }
+    msg(UI.holdPhone);
+    try{ await writeTag("antenna"); msg(T("Saved to the antenna tag ✔","Issejvjat fit-tag tal-antenna ✔")); SFX.ok(); }
+    catch(err){ msg(T("Couldn't write the tag. Hold it still and try again.","Ma stajtx nikteb it-tag. Żommu wieqaf u erġa' pprova.")); }
+    return;
+  }
+  if(b.dataset.w){
+    const g=b.dataset.w;
+    if(!NFC.ok){ $("writeMsg").innerHTML=tx(T("Writing tags needs Chrome on Android. Or store this link with any NFC app:","Biex tikteb tags trid Chrome fuq Android. Jew aħżen dan il-link b'app tal-NFC:"))+`<br><code></code>`; $("writeMsg").querySelector("code").textContent=tagUrl(g); return; }
+    msg(T(`Hold the ${GADGETS[g].name.en} tag to the phone now…`,`Qarreb it-tag ta' ${art(g)} lejn it-telefon issa…`));
+    try{ await writeTag(g); msg(T(`Done! ${GADGETS[g].name.en} tag is ready ✔`,`Lest! It-tag ta' ${art(g)} lest ✔`)); gadgetFlash(g); }
+    catch(err){ msg(T("Couldn't write the tag. Hold it still and try again.","Ma stajtx nikteb it-tag. Żommu wieqaf u erġa' pprova.")); }
+    return;
+  }
+  if(b.id==="replayIntro"){ $("setup").open=false; window.scrollTo({top:0,behavior:"smooth"}); startNFC(); R?.sleep(false); introStep(0); }
+});
+$("setupBody").addEventListener("change",e=>{ if(e.target.id==="tapScan"){ tapScans=e.target.checked; LS.set("robi-tapscans",tapScans); } });
+
+/* ---------------- start-up ---------------- */
+(function boot(){
+  try{ const q=new URLSearchParams(location.search); if(q.get("name")||q.get("friend")) adoptNames({name:q.get("name"),friend:q.get("friend")}); }catch{}
+  applyTitle(); setLang(lang); $("voice").setAttribute("aria-pressed",String(voiceOn));
+  // A tag opened this page (iPhone, or Android without the page open): continue where we were if it was recent
+  const hashPart=LEGACY[location.hash.slice(1).toLowerCase()];
+  const sess=LS.get("robi-session",null);
+  if(hashPart){
+    if(sess && Date.now()-sess.t<5*60*1000 && sess.s && !["wake","intro"].includes(sess.s.screen)){
+      S=sess.s; if(S.phase==="show"||S.phase==="wait") S.phase="input";
+      render(); setTimeout(()=>onScan(hashPart,"url"),500);
+    } else {
+      if(!onboarded){ go("wake"); R?.sleep(true); say(UI.sleeping); setTimeout(()=>onScan(hashPart,"url"),300); }
+      else { go("menu"); setTimeout(()=>onScan(hashPart,"url"),500); }
+    }
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch{}
+  } else {
+    go("wake"); R?.sleep(true); say(UI.sleeping);
+  }
+  if(NativeNfc){
+    listenNative();
+    $("scanBtn").addEventListener("click",()=>{ ac(); startNFC(); });
+    if(PLATFORM==="android") startNFC();      // Android reads tags whenever the app is open
+    NativeNfc.getLaunchTag().then(r=>{        // the app was opened by touching a tag
+      if(!r||!r.records) return; const info=parseSimple(r.records);
+      if(info.name||info.friend) adoptNames(info);
+      if(info.part){ if(S.screen==="wake"&&onboarded){ R?.sleep(false); go("menu"); } setTimeout(()=>onScan(info.part,"nfc"),600); }
+    }).catch(()=>{});
+  }
+})();
+</script>
+
+</body>
+</html>

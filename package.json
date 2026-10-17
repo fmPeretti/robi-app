@@ -1,0 +1,22 @@
+{
+  "name": "robi-robot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Robi, the NFC robot friend (English + Maltese)",
+  "type": "module",
+  "scripts": {
+    "android": "npx cap add android && node scripts/setup-native.mjs android && npx cap sync android && npx cap open android",
+    "ios": "npx cap add ios && node scripts/setup-native.mjs ios && npx cap sync ios && npx cap open ios",
+    "icons": "npx @capacitor/assets generate",
+    "sync": "node scripts/setup-native.mjs android && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.0.0"
+  }
+}

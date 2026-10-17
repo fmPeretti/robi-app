@@ -1,0 +1,8 @@
+{
+  "appId": "com.robi.robot",
+  "appName": "Robi",
+  "webDir": "www",
+  "backgroundColor": "#eef2fd",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "never" }
+}
