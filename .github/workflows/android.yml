@@ -1,0 +1,92 @@
+# Builds the signed Android APK, publishes it as a GitHub Release and
+# deploys the download page (pages/) to GitHub Pages.
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create releases
+  pages: write
+  id-token: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Create Android project
+        run: |
+          npx cap add android
+          node scripts/setup-native.mjs android
+          npx @capacitor/assets generate --android
+          npx cap sync android
+
+      - name: Set version
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]*\"/versionName \"1.0.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
+
+      - name: Build signed APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/robi.keystore"
+          cd android
+          ./gradlew --no-daemon assembleRelease \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/robi.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/robi.apk"
+          rm -f "$RUNNER_TEMP/robi.keystore"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" robi.apk \
+            --title "Robi $TAG" \
+            --notes "Android APK built from ${GITHUB_SHA::7}. Download **robi.apk** and open it on the phone." \
+            --latest
+
+      - name: Prepare download page
+        run: cp assets/icon-only.png pages/icon.png
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+  pages:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
