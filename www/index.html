@@ -515,6 +515,7 @@ void main(){
    change lives in the tables right below (texts are EN + MT).
    ============================================================ */
 const T = (en, mt) => ({en, mt});
+const EN = en => ({en, mt:null});
 const DEFAULT_NAME = "Robi";
 const FUZZ_PNG = "data:image/png;base64,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";
 const MIME = "application/x-robi+json";     // our record on each tag; other records are kept
@@ -557,6 +558,8 @@ const COMMANDS = [
   {a:"terminal",b:"hash",   act:"sleep", say:T("Sleep… zzz","Orqod… zzz")}
 ];
 
+// Jokes: T(en, mt) works in both languages; EN(en) is an English pun with no Maltese
+// version, so it's skipped in Maltese mode and shown in English only in EN+MT mode.
 const JOKES = [
   // Robi's own jokes
   [T("What does a cow say?","Il-baqra x'tgħid?"), T("Moo! And a robot cow says… BEEP-MOO!","Muu! U l-baqra robot tgħid… BIP-MUU!")],
@@ -569,54 +572,54 @@ const JOKES = [
   [T("Why did the robot wear boots?","Għaliex ir-robot libes l-istivali?"), T("To stomp in the puddles! Splash!","Biex jaqbeż fl-għadajjar! Xprakk!")],
   // Animals
   [T("What does a robot sheep say?","In-nagħġa robot x'tgħid?"), T("Beee-eep! Beee-eep!","Biii-ip! Biii-ip!")],
-  [T("What is a robot's favourite animal?","X'inhu l-annimal favorit tar-robot?"), T("A cow-culator! Moo plus moo!","Il-baqra-kalkulatriċi! Muu u muu!")],
-  [T("Why was the robot dog itchy?","Għaliex il-kelb robot kellu ħakk?"), T("It had robo-ticks!","Kellu r-robo-qurad!")],
-  [T("How do you calm down a robot dog?","Kif tikkalma kelb robot?"), T("Press the PAWS button!","Tagħfas il-buttuna PAWS! (paws = saqajn tal-kelb)")],
-  [T("Is the robot dog scary?","Il-kelb robot jbeżża'?"), T("No! Its bark is worse than its byte!","Le! Jinbaħ biss, ma jigdimx!")],
-  [T("Why don't robot chickens play basketball?","Għaliex it-tiġieġ robot ma jilagħbux basketball?"), T("Too many technical FOWLS!","Wisq fowls tekniċi! (fowl = tiġieġa)")],
+  [EN("What is a robot's favourite animal?"), EN("A cow-culator! Moo plus moo!")],
+  [EN("Why was the robot dog itchy?"), EN("It had robo-ticks!")],
+  [EN("How do you calm down a robot dog?"), EN("Press the PAWS button!")],
+  [EN("Is the robot dog scary?"), EN("No! Its bark is worse than its byte!")],
+  [EN("Why don't robot chickens play basketball?"), EN("Too many technical FOWLS!")],
   [T("Why did the robot chicken cross the road?","Għaliex it-tiġieġa robot qasmet it-triq?"), T("It was programmed to!","Għax hekk kienet ipprogrammata!")],
   // Food
-  [T("What does a robot have for lunch?","Ir-robot x'jiekol għall-ikel?"), T("A MEGA-byte! Nom nom!","MEGA-byte! Nom nom! (bite = gidma)")],
-  [T("How does a robot eat pizza?","Kif jiekol il-pizza r-robot?"), T("One byte at a time!","Byte b'byte! Gidma gidma!")],
-  [T("What do robots eat?","Ir-robots x'jieklu?"), T("A bit of this and a byte of that!","Bit minn hawn u byte minn hemm!")],
-  [T("Why do robots love pancakes?","Għaliex ir-robots iħobbu l-pancakes?"), T("Because they're full of BATTER-y!","Għax mimlija batter-ija!")],
-  [T("Why did the robot eat a light bulb?","Għaliex ir-robot kiel gilob?"), T("It wanted a LIGHT snack!","Ried snack ħafif! (light = dawl u ħafif)")],
-  [T("How do baby robots drink their milk?","Kif jixorbu l-ħalib it-trabi robots?"), T("From a ro-BOTTLE!","Mir-ro-flixkun!")],
-  [T("Want to hear a robot pizza joke?","Trid tisma' ċajta tal-pizza robot?"), T("Never mind… it's too CHEESY!","Ħallieha… għandha wisq ġobon!")],
+  [EN("What does a robot have for lunch?"), EN("A MEGA-byte! Nom nom!")],
+  [EN("How does a robot eat pizza?"), EN("One byte at a time!")],
+  [EN("What do robots eat?"), EN("A bit of this and a byte of that!")],
+  [EN("Why do robots love pancakes?"), EN("Because they're full of BATTER-y!")],
+  [EN("Why did the robot eat a light bulb?"), EN("It wanted a LIGHT snack!")],
+  [EN("How do baby robots drink their milk?"), EN("From a ro-BOTTLE!")],
+  [EN("Want to hear a robot pizza joke?"), EN("Never mind… it's too CHEESY!")],
   // Clothes and shoes
-  [T("Why did the robot go to the shoe shop?","Għaliex ir-robot mar il-ħanut taż-żraben?"), T("To get RE-BOOTED!","Biex jieħu stivali ġodda! (re-boot = jerġa' jixgħel)")],
+  [EN("Why did the robot go to the shoe shop?"), EN("To get RE-BOOTED!")],
   [T("Why are robots shy?","Għaliex ir-robots jistħu?"), T("They have hardware and software… but no underwear!","Għandhom hardware u software… imma l-ebda qalziet ta' taħt!")],
-  [T("What does a robot wear in the snow?","Ir-robot x'jilbes fil-borra?"), T("Snow boots! It's a SNOW-BOT!","Stivali tal-borra! Huwa SNOW-BOT!")],
-  [T("What do you call a frozen robot?","Kif issejjaħ robot iffriżat?"), T("An ICE-BORG! Brrr!","ICE-BORG! Brrr!")],
+  [EN("What does a robot wear in the snow?"), EN("Snow boots! It's a SNOW-BOT!")],
+  [EN("What do you call a frozen robot?"), EN("An ICE-BORG! Brrr!")],
   // Getting around
-  [T("How did the robot cross the river?","Kif qasam ix-xmara r-robot?"), T("In a RO-BOAT! Row row row!","Bir-RO-DGĦAJSA! Qadef, qadef!")],
-  [T("What do you call a robot that drives a car?","Kif issejjaħ robot li jsuq karozza?"), T("A ROAD-BOT! Vroom!","ROAD-BOT! Vrumm!")],
+  [EN("How did the robot cross the river?"), EN("In a RO-BOAT! Row row row!")],
+  [EN("What do you call a robot that drives a car?"), EN("A ROAD-BOT! Vroom!")],
   [T("Why couldn't the robot get a driving licence?","Għaliex ir-robot ma setax jieħu l-liċenzja tas-sewqan?"), T("It beeped too much! BEEP BEEP!","Għax jagħmel wisq bip! BIP BIP!")],
-  [T("Why was the robot tired after the car ride?","Għaliex ir-robot għeja wara l-vjaġġ bil-karozza?"), T("It was a HARD DRIVE!","Kien hard drive! (sewqa iebsa)")],
-  [T("Why did the robot fall off its bike?","Għaliex ir-robot waqa' mir-rota?"), T("It was a little bit RUSTY!","Kien ftit rusty! (sadid u nieqes il-prattika)")],
-  [T("Why did the robot sleep under the car?","Għaliex ir-robot raqad taħt il-karozza?"), T("To wake up OILY in the morning!","Biex iqum OILY filgħodu! (early = kmieni)")],
+  [EN("Why was the robot tired after the car ride?"), EN("It was a HARD DRIVE!")],
+  [EN("Why did the robot fall off its bike?"), EN("It was a little bit RUSTY!")],
+  [EN("Why did the robot sleep under the car?"), EN("To wake up OILY in the morning!")],
   // Robot life
-  [T("What did the robot say when it was time for bed?","Ir-robot x'qal meta wasal il-ħin tas-sodda?"), T("Ro-NOT! Not yet!","Ro-LE! Mhux issa!")],
+  [EN("What did the robot say when it was time for bed?"), EN("Ro-NOT! Not yet!")],
   [T("Why do robots go on holiday?","Għaliex ir-robots imorru btala?"), T("To recharge their batteries!","Biex jiċċarġjaw il-batteriji!")],
   [T("Why was the robot sneezing?","Għaliex ir-robot kien qed jgħatas?"), T("It caught a computer virus! A-CHOO-BEEP!","Qabditu virus tal-kompjuter! ATXU-BIP!")],
   [T("Why are robots never scared?","Għaliex ir-robots qatt ma jibżgħu?"), T("They have nerves of STEEL!","Għandhom nervituri tal-azzar!")],
-  [T("Where do robots sit?","Fejn joqogħdu bilqiegħda r-robots?"), T("On their ro-BOTTOMS!","Fuq ir-ro-BOTTOMS tagħhom!")],
-  [T("How do robots get strong?","Kif isiru b'saħħithom ir-robots?"), T("Circuit training! One, two, BEEP!","Circuit training! Wieħed, tnejn, BIP!")],
-  [T("What is a robot's favourite music?","X'inhi l-mużika favorita tar-robot?"), T("Heavy METAL!","Heavy METAL! (metall)")],
+  [EN("Where do robots sit?"), EN("On their ro-BOTTOMS!")],
+  [EN("How do robots get strong?"), EN("Circuit training! One, two, BEEP!")],
+  [EN("What is a robot's favourite music?"), EN("Heavy METAL!")],
   [T("Why did the robot get so grumpy?","Għaliex ir-robot tant kien inkurlat?"), T("Everyone kept pushing its buttons!","Kulħadd baqa' jagħfaslu l-buttuni!")],
-  [T("What was wrong with the wooden robot?","X'kien hemm ħażin bir-robot tal-injam?"), T("It just WOODEN work!","WOODEN work! Ma kienx jaħdem! (wooden = tal-injam)")],
-  [T("What did the baby robot call its daddy?","It-tarbija robot kif sejħet lil missierha?"), T("DA-TA! Da-ta!","DA-TA! Da-ta!")],
-  [T("How do robots say goodbye?","Kif isellmu r-robots?"), T("Bye-nary! Bye bye! Beep beep!","Bye-nary! Ċaw ċaw! Bip bip!")],
-  [T("What did the robot say to its best friend?","Ir-robot x'qal lill-aqwa ħabib tiegħu?"), T("I like you a BOT!","Inħobbok BOT! (a lot = ħafna)")],
+  [EN("What was wrong with the wooden robot?"), EN("It just WOODEN work!")],
+  [EN("What did the baby robot call its daddy?"), EN("DA-TA! Da-ta!")],
+  [EN("How do robots say goodbye?"), EN("Bye-nary! Bye bye! Beep beep!")],
+  [EN("What did the robot say to its best friend?"), EN("I like you a BOT!")],
   [T("Why is a robot mechanic never lonely?","Għaliex il-mekkaniku tar-robots qatt ma jkun waħdu?"), T("He's always making new friends!","Dejjem qed jibni ħbieb ġodda!")],
-  [T("What do you get if you cross a robot and a tractor?","X'jiġik jekk taħlat robot ma' trattur?"), T("A TRANS-FARMER!","TRANS-FARMER! (farmer = bidwi)")],
+  [EN("What do you get if you cross a robot and a tractor?"), EN("A TRANS-FARMER!")],
   [T("How many robots does it take to change a light bulb?","Kemm hemm bżonn robots biex ibiddlu gilob?"), T("Three! One holds the bulb and two turn the ladder!","Tlieta! Wieħed iżomm il-gilob u tnejn iduru s-sellum!")],
   [T("The inventor asked the robot: 'Can you give me a hand?'","L-inventur staqsa lir-robot: 'Tagħtini daqqa t'id?'"), T("So the robot took off its hand and gave it to him!","U r-robot qala' idu u tahielu!")],
-  [T("What's the difference between pizza and robot jokes?","X'inhi d-differenza bejn il-pizza u ċ-ċajt tar-robots?"), T("Robot jokes can't be TOPPED!","Iċ-ċajt tar-robots ma jistax jingħeleb!")],
+  [EN("What's the difference between pizza and robot jokes?"), EN("Robot jokes can't be TOPPED!")],
   // Knock knock
-  [T("Knock knock! Who's there? Anne!","Tok tok! Min hu? Anne!"), T("Anne who? Anne DROID!","Anne min? Anne DROID! (android)")],
-  [T("Knock knock! Who's there? Don!","Tok tok! Min hu? Don!"), T("Don who? DON'T push my robot buttons!","Don min? Tagħfasx il-buttuni tiegħi! (don't = tagħmilx)")],
-  [T("Knock knock! Who's there? Rob!","Tok tok! Min hu? Rob!"), T("Rob who? Ro-BOT, that's who! Beep!","Rob min? Ro-BOT, hekk min! Bip!")]
+  [EN("Knock knock! Who's there? Anne!"), EN("Anne who? Anne DROID!")],
+  [EN("Knock knock! Who's there? Don!"), EN("Don who? DON'T push my robot buttons!")],
+  [T("Knock knock! Who's there? Rob!","Tok tok! Min hu? Rob!"), T("Rob who? Ro-BOT, that's who! Beep!","Rob min? Ro-BOT, jien! Bip!")]
 ];
 
 const FEELINGS = [
@@ -677,14 +680,15 @@ function cleanName(n){ return String(n||"").replace(/[<>&"'`\\]/g,"").trim().sli
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function tx(t){
   if(typeof t==="string") return `<span class="t-en">${esc(t)}</span>`;
-  const en=`<span class="t-en">${esc(t.en)}</span>`, mt=`<span class="t-mt" lang="mt">${esc(t.mt)}</span>`;
+  const en=`<span class="t-en">${esc(t.en)}</span>`; if(t.mt==null) return en;
+  const mt=`<span class="t-mt" lang="mt">${esc(t.mt)}</span>`;
   return lang==="en"?en:lang==="mt"?mt:en+mt;
 }
 const $ = id => document.getElementById(id);
 let lastSaid = null;
 function say(t, opts={}){
   lastSaid = t;
-  const b=$("bubble"); b.innerHTML = tx(t); b.classList.toggle("solo", lang!=="both");
+  const b=$("bubble"); b.innerHTML = tx(t); b.classList.toggle("solo", lang!=="both"||t.mt==null);
   b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
   if(document.body.classList.contains("compact")){ const a=$("avatar"); a.classList.remove("talk"); void a.offsetWidth; a.classList.add("talk"); }
   if(voiceOn) speak(t);
@@ -697,8 +701,8 @@ function speak(t){
     const voices=speechSynthesis.getVoices();
     const mtVoice=voices.find(v=>/^mt/i.test(v.lang));
     const q=[];
-    if(lang!=="mt") q.push([t.en,"en-GB",null]);
-    if(lang!=="en" && mtVoice) q.push([t.mt,"mt-MT",mtVoice]);
+    if(lang!=="mt"||t.mt==null) q.push([t.en,"en-GB",null]);
+    if(lang!=="en" && t.mt!=null && mtVoice) q.push([t.mt,"mt-MT",mtVoice]);
     q.forEach(([s,l,v])=>{ const u=new SpeechSynthesisUtterance(s.replace(/[#*]/g,"")); u.lang=l; if(v) u.voice=v; u.rate=0.95; u.pitch=1.3; speechSynthesis.speak(u); });
   }catch{}
 }
@@ -1315,7 +1319,9 @@ function playScan(g){
 function feel(i){ const f=FEELINGS[i]; say(f.reply); R?.play(f.act); if(f.act==="sleep") SFX.snore(); else if(f.act==="dance"){ jingle([523,659,784,1047],0.13); } else if(f.act==="hug") jingle([392,523,659],0.2); else SFX.ok(); }
 let jokeIdx=-1;
 function tellJoke(){
-  clearTimers(); let i; do{ i=Math.floor(Math.random()*JOKES.length); }while(i===jokeIdx && JOKES.length>1); jokeIdx=i;
+  clearTimers();
+  const pool=JOKES.map((_,k)=>k).filter(k=>lang!=="mt"||JOKES[k][0].mt!=null);
+  let i; do{ i=pool[Math.floor(Math.random()*pool.length)]; }while(i===jokeIdx && pool.length>1); jokeIdx=i;
   const [a,b]=JOKES[i]; say(a); R?.play("think"); tone(660,0.1);
   later(()=>{ say(b); SFX.laugh(); R?.play("laugh"); },Math.min(5000,Math.max(2800,1600+a.en.length*45)));
 }
@@ -1324,7 +1330,8 @@ function tellJoke(){
    Top bar, grown-up setup, start-up
    ============================================================ */
 function setLang(l){ lang=l; LS.set("robi-lang",l); document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===l)));
-  render(); renderSetup(); if(lastSaid){ const b=$("bubble"); b.innerHTML=tx(lastSaid); b.classList.toggle("solo",l!=="both"); } }
+  render(); renderSetup(); if(lastSaid){ const b=$("bubble"); b.innerHTML=tx(lastSaid); b.classList.toggle("solo",l!=="both"||lastSaid.mt==null); }
+  if(l==="mt" && S.screen==="joke" && JOKES[jokeIdx]?.[0].mt==null) tellJoke(); }
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.lang)));
 $("gear").addEventListener("click",()=>{ const d=$("setup"); d.open=!d.open; if(d.open) setTimeout(()=>d.scrollIntoView({behavior:"smooth",block:"start"}),30); });
 $("voice").addEventListener("click",()=>{ voiceOn=!voiceOn; LS.set("robi-voice",voiceOn); $("voice").setAttribute("aria-pressed",String(voiceOn)); if(voiceOn) speak(lastSaid); else try{speechSynthesis.cancel()}catch{} });
