@@ -23,13 +23,36 @@ check("antenna link with names opens Robi", resolves(`-a android.nfc.action.NDEF
 check("Robi data record opens Robi", resolves(`-a android.nfc.action.NDEF_DISCOVERED -t application/x-robi+json`));
 check("other websites' tags don't open Robi", !resolves(`-a android.nfc.action.NDEF_DISCOVERED -d "https://example.com/menu"`));
 
+// Whatever happens next, keep the Android log, the crash log and a screenshot for the CI artifact
+const saveLogs = () => {
+  try { shot("last"); } catch {}
+  try { fs.writeFileSync(`${OUT}/logcat.txt`, sh(`adb logcat -d`)); } catch {}
+  try { fs.writeFileSync(`${OUT}/crash-log.txt`, sh(`adb logcat -d -b crash`)); } catch {}
+};
+process.on("uncaughtException", e => { console.log("  ✘ test stopped: " + e.message); saveLogs(); process.exit(1); });
+process.on("unhandledRejection", e => { console.log("  ✘ test stopped: " + (e && e.message || e)); saveLogs(); process.exit(1); });
+
 // ---- launch the app and look inside its WebView
 sh(`adb logcat -c`);
 sh(`adb shell am start -W -n ${PKG}/.MainActivity`);
 const [device] = await android.devices();
-const webview = await device.webView({ pkg: PKG }, { timeout: 120000 });
-const page = await webview.page();
-await page.waitForFunction(() => typeof S !== "undefined" && typeof NativeNfc !== "undefined", null, { timeout: 120000 });
+// The WebView's first page can be replaced while Capacitor loads the app, so (re)attach until the app is there
+async function appPage() {
+  let last = "";
+  for (let i = 0; i < 12; i++) {
+    try {
+      const wv = await device.webView({ pkg: PKG }, { timeout: 60000 });
+      const p = await wv.page();
+      await p.waitForFunction(() => typeof S !== "undefined" && typeof NativeNfc !== "undefined", null, { timeout: 15000 });
+      return p;
+    } catch (e) { last = e.message.split("\n")[0]; console.log(`    (waiting for the app's page: ${last})`); }
+    let pid = ""; try { pid = sh(`adb shell pidof ${PKG}`).trim(); } catch {}
+    if (!pid) { console.log("    (the app is not running)"); break; }
+    await new Promise(r => setTimeout(r, 3000));
+  }
+  throw new Error("couldn't reach the app's page: " + last);
+}
+let page = await appPage();
 await page.waitForTimeout(3000);                        // let start-up finish (it already asks the plugin to start reading)
 shot("1-wake");
 
@@ -76,10 +99,8 @@ let alive = ""; try { alive = sh(`adb shell pidof ${PKG}`).trim(); } catch {}
 check("the app survives being opened by an NFC intent", alive.length > 0, started.split("\n").find(l => /Status|Error/.test(l)) || "");
 
 // ---- no Java crash in the log
-const log = sh(`adb logcat -d -b crash`);
-fs.writeFileSync(`${OUT}/crash-log.txt`, log);
+saveLogs();
+const log = fs.readFileSync(`${OUT}/crash-log.txt`, "utf8");
 check("no crash in the Android log", !log.includes(PKG), log.includes(PKG) ? "see crash-log.txt" : "");
-
-fs.writeFileSync(`${OUT}/logcat.txt`, sh(`adb logcat -d`));
 console.log(failed ? `\n${failed} emulator check(s) failed` : "\nall emulator checks passed");
 process.exit(failed ? 1 : 0);

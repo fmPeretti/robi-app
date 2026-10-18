@@ -12,6 +12,13 @@ const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
 const pageErrors = p => assert.deepEqual(p.errors, [], "JavaScript errors on the page");
 
+// iPhone: "Let's play?!" is a tap, so it already opens the NFC sheet; the user closes it and the Scan button shows
+async function closeSheet(page) {
+  await waitFor(page, () => NFC.scanning === true);
+  await nativeEvent(page, "sessionEnded", { reason: "Session invalidated by user", code: 200 });
+  await waitFor(page, () => !document.getElementById("scanBtn").hidden);
+}
+
 // Go from the wake screen to the menu, like tapping "Let's play?!"
 async function toMenu(page) {
   await page.click('[data-act="wake"]');
@@ -106,13 +113,14 @@ test("web: every joke has a setup and a punchline, English-only ones on both lin
 
 // ---------------------------------------------------------------- iOS app (Capacitor bridge, fake native side)
 
-test("iOS: the NFC plugin is reachable and Scan opens the native scanner", async () => {
+test("iOS: waking Robi opens the scanner, and Scan opens it again", async () => {
   const p = await open("ios", { storage: READY });
   assert.equal(await p.evaluate(() => [PLATFORM, !!NativeNfc].join()), "ios,true");
+  assert.equal(await p.evaluate(() => document.getElementById("scanBtn").hidden), true, "no Scan button on the wake screen");
   await toMenu(p);
-  await waitFor(p, () => !document.getElementById("scanBtn").hidden);
+  await closeSheet(p);
   await p.click("#scanBtn");
-  await waitFor(p, () => window.__calls.some(c => c.methodName === "startScan"));
+  await waitFor(p, () => window.__calls.filter(c => c.methodName === "startScan").length === 2);
   const c = await calls(p);
   assert.ok(c.indexOf("isAvailable") < c.indexOf("startScan"), "checks availability before opening the scanner");
   assert.match((await lastCall(p, "startScan")).options.message, /Hold me near the phone/);
@@ -124,8 +132,7 @@ test("iOS: the NFC plugin is reachable and Scan opens the native scanner", async
 test("iOS: a tag read in the scanner reaches the game (both records and URL-only)", async () => {
   const p = await open("ios", { storage: READY });
   await toMenu(p);
-  await p.click("#scanBtn");
-  await waitFor(p, () => window.__calls.some(c => c.methodName === "startScan"));
+  await waitFor(p, () => NFC.scanning === true);
   await nativeEvent(p, "tag", TAG.full("terminal"));
   await waitFor(p, t => document.getElementById("bubble").innerText.includes(t), FOUND.terminal);
   await nativeEvent(p, "tag", TAG.urlOnly("bootL"));
@@ -133,12 +140,14 @@ test("iOS: a tag read in the scanner reaches the game (both records and URL-only
   pageErrors(p);
 });
 
-test("iOS: closing the scanner brings the Scan button back without an error", async () => {
+test("iOS: closing the scanner or its timeout brings the Scan button back without an error", async () => {
   const p = await open("ios", { storage: READY });
   await toMenu(p);
+  await closeSheet(p);
+  assert.equal(await toast(p), "");
   await p.click("#scanBtn");
   await waitFor(p, () => NFC.scanning === true);
-  await nativeEvent(p, "sessionEnded", { reason: "Session invalidated by user", code: 200 });
+  await nativeEvent(p, "sessionEnded", { reason: "Session timeout", code: 201 });
   await waitFor(p, () => !document.getElementById("scanBtn").hidden);
   assert.equal(await toast(p), "");
 });
@@ -146,7 +155,6 @@ test("iOS: closing the scanner brings the Scan button back without an error", as
 test("iOS: a scanner error is shown on screen", async () => {
   const p = await open("ios", { storage: READY });
   await toMenu(p);
-  await p.click("#scanBtn");
   await waitFor(p, () => NFC.scanning === true);
   await nativeEvent(p, "sessionEnded", { reason: "Missing required entitlement", code: 203 });
   await waitFor(p, () => document.getElementById("toast").innerText.includes("Missing required entitlement"));
@@ -155,6 +163,8 @@ test("iOS: a scanner error is shown on screen", async () => {
 test("iOS: NFC not available shows the iPhone message", async () => {
   const p = await open("ios", { storage: READY, auto: { isAvailable: { available: false, enabled: false, needsButton: true } } });
   await toMenu(p);
+  await waitFor(p, () => document.getElementById("toast").innerText.includes("This iPhone app can't use NFC"));
+  await p.evaluate(() => setStatus(""));
   await p.click("#scanBtn");
   await waitFor(p, () => document.getElementById("toast").innerText.includes("This iPhone app can't use NFC"));
   assert.ok(!(await calls(p)).includes("startScan"));
@@ -163,7 +173,10 @@ test("iOS: NFC not available shows the iPhone message", async () => {
 test("iOS: plugin not registered shows a clear error (the old SceneDelegate bug)", async () => {
   const p = await open("ios", { storage: READY, noPlugin: true });
   await waitFor(p, () => document.getElementById("toast").innerText.includes("NFC part of the app is missing"));
+  await p.evaluate(() => setStatus(""));
   await toMenu(p);
+  await waitFor(p, () => document.getElementById("toast").innerText.includes("not implemented"));
+  await p.evaluate(() => setStatus(""));
   await p.click("#scanBtn");
   await waitFor(p, () => document.getElementById("toast").innerText.includes("not implemented"));
 });
