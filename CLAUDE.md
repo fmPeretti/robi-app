@@ -27,6 +27,12 @@ npm run android      # cap add android + setup-native + cap sync + opens Android
 
 The APK is built from Android Studio (Build → Generate APKs), or with `cd android && ./gradlew assembleDebug`, which outputs `android/app/build/outputs/apk/debug/app-debug.apk`.
 
+## Tests
+
+- `tests/app.test.mjs`: headless Chromium. The web version (tag links opening new tabs, the games, Maltese jokes) and the iOS/Android JavaScript talking to RobiNfc through Capacitor's real `native-bridge.js` with a fake native side (tags, scanner closed/errors, writing records, launch tag, NFC off/on). Run: `npm install && npm i --no-save playwright@1.62.1 && npx playwright install chromium && node tests/app.test.mjs`.
+- `tests/android-emulator.mjs`: the real debug APK on an emulator (manifest tag filters, the page reaches the Java plugin, no crash, screenshots). CI only.
+- CI (`.github/workflows/android.yml`) publishes the APK only when both pass.
+
 ## Tag format
 
 Gadget keys: `antenna`, `terminal` (the `>_` on the chest), `hash` (the `#` on the back), `bootL`, `bootR` (the robot's own left and right).

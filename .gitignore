@@ -5,3 +5,4 @@ node_modules/
 *.keystore
 *.jks
 .env
+emulator-results/

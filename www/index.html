@@ -940,7 +940,7 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
-const APP_VERSION="2026-10-18e";   // shown in grown-up setup, to tell which build a phone is running
+const APP_VERSION="2026-10-18f";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
@@ -995,10 +995,12 @@ function handleTagInfo(info){
 const SCAN_MSG="Hold me near the phone · Qarrabni lejn it-telefon";
 function listenNative(){
   if(!NativeNfc||NFC.listening) return; NFC.listening=true;
-  NativeNfc.addListener("tag",ev=>{ if(NFC.busy) return; handleTagInfo(parseSimple(ev.records)); });
+  // addListener returns a promise: an unregistered plugin rejects it later, so catch that too
+  const failed=e=>{ NFC.listening=false; nfcPluginError(e); };
+  Promise.resolve(NativeNfc.addListener("tag",ev=>{ if(NFC.busy) return; handleTagInfo(parseSimple(ev.records)); })).catch(failed);
   // iOS ends the session on cancel (200), timeout (201) and after a read (204); anything else is a real error
-  NativeNfc.addListener("sessionEnded",ev=>{ NFC.scanning=false; renderScanBtn();
-    if(ev&&ev.code!=null&&![200,201,204].includes(ev.code)) setStatus(T(`The NFC scanner couldn't start: ${ev.reason} (${ev.code})`,`L-iskaner tal-NFC ma setax jibda: ${ev.reason} (${ev.code})`)); });
+  Promise.resolve(NativeNfc.addListener("sessionEnded",ev=>{ NFC.scanning=false; renderScanBtn();
+    if(ev&&ev.code!=null&&![200,201,204].includes(ev.code)) setStatus(T(`The NFC scanner couldn't start: ${ev.reason} (${ev.code})`,`L-iskaner tal-NFC ma setax jibda: ${ev.reason} (${ev.code})`)); })).catch(failed);
 }
 async function startNFC(){
   if(NativeNfc){

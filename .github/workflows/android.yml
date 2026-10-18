@@ -1,5 +1,9 @@
-# Builds the signed Android APK, publishes it as a GitHub Release and
-# deploys the download page (pages/) to GitHub Pages.
+# Builds the Android APK, tests it, and only then publishes it as a GitHub Release
+# and deploys the download page (pages/) to GitHub Pages.
+#   build         signed release APK (what people install) + debug APK (for the emulator test)
+#   test-app      tests/app.test.mjs: web version + iOS/Android JavaScript through Capacitor's real bridge
+#   test-android  tests/android-emulator.mjs: the real APK on an Android emulator
+#   release       GitHub Release + download page, only if every test passed
 name: Android APK
 
 on:
@@ -49,7 +53,7 @@ jobs:
           sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]*\"/versionName \"1.0.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
           grep -E 'versionCode|versionName' android/app/build.gradle
 
-      - name: Build signed APK
+      - name: Build APKs (signed release + debug)
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -57,22 +61,107 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/robi.keystore"
           cd android
-          ./gradlew --no-daemon assembleRelease \
+          ./gradlew --no-daemon assembleRelease assembleDebug \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/robi.keystore" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
-          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/robi.apk"
+          mkdir -p "$GITHUB_WORKSPACE/apk"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/apk/robi.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/apk/robi-debug.apk"
           rm -f "$RUNNER_TEMP/robi.keystore"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: apk/
+          retention-days: 14
+
+  test-app:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install dependencies and a headless browser
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: www/capacitor.js matches the installed @capacitor/core
+        run: cmp www/capacitor.js node_modules/@capacitor/core/dist/capacitor.js
+
+      - name: Run the app tests
+        run: node tests/app.test.mjs
+
+  test-android:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install the test driver
+        run: npm install --no-save --no-audit --no-fund playwright@1.62.1
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: apk
+
+      - name: Enable KVM (hardware acceleration for the emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the APK on an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r apk/robi-debug.apk
+            node tests/android-emulator.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-results
+          path: emulator-results/
+          retention-days: 14
+
+  release:
+    needs: [build, test-app, test-android]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: apk
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v1.0.${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" robi.apk \
+          gh release create "$TAG" apk/robi.apk \
+            --target "$GITHUB_SHA" \
             --title "Robi $TAG" \
-            --notes "Android APK built from ${GITHUB_SHA::7}. Download **robi.apk** and open it on the phone." \
+            --notes "Android APK built from ${GITHUB_SHA::7}, tested (app tests + Android emulator). Download **robi.apk** and open it on the phone." \
             --latest
 
       - name: Prepare download page
@@ -83,7 +172,7 @@ jobs:
           path: pages
 
   pages:
-    needs: build
+    needs: release
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
