@@ -15,7 +15,7 @@ A gift for a friend's kid (about 2 years old): a crocheted robot plushie with 5 
 ## Stack
 
 - Capacitor 8: Node 22+, Android Studio 2025.2.1+, Xcode 26+.
-- No bundler and no web dependencies. The JS uses `window.Capacitor.registerPlugin("RobiNfc")` when native, and falls back to Web NFC (`NDEFReader`) in Chrome on Android.
+- No bundler. The page loads `www/capacitor.js` (the browser build of `@capacitor/core`, copied by `setup-native.mjs`): the native bridge alone has no `Capacitor.registerPlugin`, and without it the app never reaches the NFC plugin on iOS or Android. The JS uses `window.Capacitor.registerPlugin("RobiNfc")` when native, and falls back to Web NFC (`NDEFReader`) in Chrome on Android.
 
 ## Build an Android APK
 

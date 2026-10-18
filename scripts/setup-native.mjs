@@ -20,6 +20,13 @@ write(path.join(root, "www", "robi-config.js"),
   `window.ROBI_WEB_BASE = ${JSON.stringify(robi.webBase || "")};\n`);
 ok("www/robi-config.js written (webBase: " + (robi.webBase || "not set") + ")");
 
+// The page has no bundler, so it loads @capacitor/core's browser build itself: without it
+// window.Capacitor has no registerPlugin and the app can't reach the NFC plugin.
+const coreJs = path.join(root, "node_modules", "@capacitor", "core", "dist", "capacitor.js");
+if (!fs.existsSync(coreJs)) fail("node_modules/@capacitor/core not found. Run `npm install` first.");
+fs.copyFileSync(coreJs, path.join(root, "www", "capacitor.js"));
+ok("www/capacitor.js copied from @capacitor/core");
+
 if (platform === "android") setupAndroid();
 else if (platform === "ios") setupIos();
 else fail("Say which platform: node scripts/setup-native.mjs android|ios");

@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#eef2fd">
+<!-- @capacitor/core: adds Capacitor.registerPlugin, which the native bridge alone doesn't provide -->
+<script src="capacitor.js"></script>
 <script src="robi-config.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none} input{-webkit-user-select:text;user-select:text} img{max-width:100%} [hidden]{display:none!important}</style>
 </head>
@@ -938,7 +940,7 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
-const APP_VERSION="2026-10-18d";   // shown in grown-up setup, to tell which build a phone is running
+const APP_VERSION="2026-10-18e";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
