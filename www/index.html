@@ -938,7 +938,7 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
-const APP_VERSION="2026-10-18c";   // shown in grown-up setup, to tell which build a phone is running
+const APP_VERSION="2026-10-18d";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
@@ -1000,7 +1000,7 @@ function listenNative(){
 }
 async function startNFC(){
   if(NativeNfc){
-    listenNative();
+    try{ listenNative(); }catch(e){ NFC.listening=false; nfcPluginError(e); renderScanBtn(); return; }
     if(NFC.scanning){ if(IOS) setStatus(T("The scanner is already open. Hold the tag near the top of the phone.","L-iskaner diġà miftuħ. Qarreb it-tag lejn in-naħa ta' fuq tat-telefon.")); return; }
     let a;
     try{ a=await NativeNfc.isAvailable(); }
@@ -1069,6 +1069,10 @@ function adoptNames(info){
   if(changed){ applyTitle(); if(!onboarded){ onboarded=true; LS.set("robi-onboarded",true); }
     if(S.screen!=="intro") say(T(`Beep! I remember now: my name is ${N()}!`,`Bip! Issa niftakar: jisimni ${N()}!`)); }
 }
+function nfcPluginError(e){ setStatus(T(`The NFC part of the app is missing (${e&&e.message||e}). Run setup-native and cap sync again.`,`Il-parti tal-NFC tal-app nieqsa (${e&&e.message||e}). Erġa' ħaddem setup-native u cap sync.`)); }
+// In the phone apps, show unexpected errors instead of failing silently (there's no console on a phone)
+if(NATIVE){ window.addEventListener("error",e=>setStatus(T(`Error: ${e.message}`,`Żball: ${e.message}`)));
+  window.addEventListener("unhandledrejection",e=>setStatus(T(`Error: ${e.reason&&e.reason.message||e.reason}`,`Żball: ${e.reason&&e.reason.message||e.reason}`))); }
 let toastTimer=0;
 function setStatus(t){ $("status").innerHTML = t?tx(t):"";
   const el=$("toast"); clearTimeout(toastTimer); el.innerHTML = t?tx(t):""; el.hidden=!t; if(t) toastTimer=setTimeout(()=>{ el.hidden=true; },8000); }
@@ -1461,8 +1465,8 @@ try{ speechSynthesis.addEventListener("voiceschanged",()=>{ const s=$("voiceSel"
     go("wake"); R?.sleep(true); say(UI.sleeping);
   }
   if(NativeNfc){
-    listenNative();
     $("scanBtn").addEventListener("click",()=>{ ac(); setStatus(T("Opening the NFC scanner…","Qed niftaħ l-iskaner tal-NFC…")); startNFC(); });
+    try{ listenNative(); }catch(e){ NFC.listening=false; nfcPluginError(e); }
     if(PLATFORM==="android") startNFC();      // Android reads tags whenever the app is open
     // NFC switched on from the settings while the app was in the background: start reading on return
     document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&PLATFORM==="android"&&!NFC.scanning&&!NFC.busy) startNFC(); });
