@@ -1454,6 +1454,8 @@ try{ speechSynthesis.addEventListener("voiceschanged",()=>{ const s=$("voiceSel"
     listenNative();
     $("scanBtn").addEventListener("click",()=>{ ac(); startNFC(); });
     if(PLATFORM==="android") startNFC();      // Android reads tags whenever the app is open
+    // NFC switched on from the settings while the app was in the background: start reading on return
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&PLATFORM==="android"&&!NFC.scanning&&!NFC.busy) startNFC(); });
     NativeNfc.getLaunchTag().then(r=>{        // the app was opened by touching a tag
       if(!r||!r.records) return; const info=parseSimple(r.records);
       if(info.name||info.friend) adoptNames(info);
