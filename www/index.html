@@ -159,6 +159,8 @@ summary .t-mt{margin-left:.5em}
 .setup h2 .t-en,.setup h2 .t-mt{font-family:var(--font-display);font-weight:700}
 .setup p .t-en,.setup p .t-mt,.setup label .t-en,.setup label .t-mt,.setup button .t-en,.setup button .t-mt{font-family:var(--font-body)}
 .setup p{margin:.4em 0;line-height:1.4}
+.setup select{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:12px;border:2px solid var(--line);font:inherit;color:var(--ink);background:#fbfcff}
+.setup input[type=range]{width:100%;accent-color:var(--accent)}
 .setup input[type=text],.setup input[type=url]{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:12px;border:2px solid var(--line);font:inherit;color:var(--ink);background:#fbfcff}
 .setup .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .setup .row2 button,.setup .grid button{border:0;border-radius:14px;padding:10px 14px;font-weight:800;cursor:pointer;background:#eef2fd;color:var(--ink);display:flex;gap:8px;align-items:center;text-align:left}
@@ -694,6 +696,23 @@ function say(t, opts={}){
   if(voiceOn) speak(t);
   saveSession();
 }
+/* Voice: the phone's own text-to-speech. Without a choice the browser uses its default voice
+   (on iPhone a serious grown-up man), so pick a friendly one; a grown-up can change it in setup. */
+const NICE_VOICES=["Samantha","Karen","Moira","Tessa","Serena","Kate","Stephanie","Martha","Catherine","Google UK English Female","Google US English","Microsoft Libby","Microsoft Sonia","Microsoft Aria","Microsoft Jenny"];
+// Joke voices and the old robotic "Eloquence" ones: still listed in setup, never picked on their own.
+const ODD_VOICES=/^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Pipe Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Princess|Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley)\b/i;
+let voiceName = LS.get("robi-voice-name","");
+let voicePitch = LS.get("robi-voice-pitch",1.1);
+function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); }catch{ return []; } }
+function voiceScore(v){
+  let s=0; const i=NICE_VOICES.findIndex(n=>v.name.startsWith(n)); if(i>=0) s+=100-i;
+  if(/enhanced|premium|natural|neural/i.test(v.name+" "+v.voiceURI)) s+=50;
+  if(ODD_VOICES.test(v.name)) s-=200;
+  if(/^en[-_]GB/i.test(v.lang)) s+=3;
+  return s;
+}
+const voicesByScore=()=>enVoices().sort((a,b)=>voiceScore(b)-voiceScore(a));
+function enVoice(){ const vs=voicesByScore(); return vs.find(v=>v.name===voiceName) || vs[0] || null; }
 function speak(t){
   try{
     if(!("speechSynthesis" in window) || !t) return;
@@ -701,9 +720,9 @@ function speak(t){
     const voices=speechSynthesis.getVoices();
     const mtVoice=voices.find(v=>/^mt/i.test(v.lang));
     const q=[];
-    if(lang!=="mt"||t.mt==null) q.push([t.en,"en-GB",null]);
+    if(lang!=="mt"||t.mt==null) q.push([t.en,"en-GB",enVoice()]);
     if(lang!=="en" && t.mt!=null && mtVoice) q.push([t.mt,"mt-MT",mtVoice]);
-    q.forEach(([s,l,v])=>{ const u=new SpeechSynthesisUtterance(s.replace(/[#*]/g,"")); u.lang=l; if(v) u.voice=v; u.rate=0.95; u.pitch=1.3; speechSynthesis.speak(u); });
+    q.forEach(([s,l,v])=>{ const u=new SpeechSynthesisUtterance(s.replace(/[#*]/g,"")); u.lang=v?v.lang:l; if(v) u.voice=v; u.rate=0.92; u.pitch=voicePitch; speechSynthesis.speak(u); });
   }catch{}
 }
 
@@ -1361,6 +1380,14 @@ function renderSetup(){
     <div class="grid" id="writeRow">${GKEYS.map(gbtn).join("")}</div>
     <p id="writeMsg"></p>
     <label class="chk"><input type="checkbox" id="tapScan" ${tapScans?"checked":""}> <span>${tx(T("Tapping a gadget on the screen counts as a scan","Meta tmiss aġġeġġ fuq l-iskrin jgħodd bħala skan"))}</span></label>
+    <h2>${tx(T("Robot's voice","Il-vuċi tar-robot"))}</h2>
+    <p><label for="voiceSel">${tx(T("Voice","Vuċi"))}</label></p>
+    <select id="voiceSel">${voiceOptions()}</select>
+    <p><label for="voicePitch">${tx(T("Deeper ↔ higher","Iktar baxx ↔ iktar għoli"))}</label></p>
+    <input id="voicePitch" type="range" min="0.8" max="1.6" step="0.05" value="${voicePitch}">
+    <div class="row2"><button id="voiceTry">${tx(T("Try it","Ippruvaha"))}</button></div>
+    <p>${tx(T("More and nicer voices on iPhone: Settings → Accessibility → Spoken Content → Voices → English. Download one marked Enhanced or Premium, then reopen the app.",
+              "Iktar vuċijiet fuq l-iPhone: Settings → Accessibility → Spoken Content → Voices → English. Niżżel waħda Enhanced jew Premium, imbagħad erġa' iftaħ l-app."))}</p>
     <div class="row2"><button id="replayIntro">${tx(T("Replay the introduction","Erġa' ara l-introduzzjoni"))}</button></div>`;
 }
 $("setupBody").addEventListener("click",async e=>{
@@ -1383,9 +1410,20 @@ $("setupBody").addEventListener("click",async e=>{
     catch(err){ msg(T("Couldn't write the tag. Hold it still and try again.","Ma stajtx nikteb it-tag. Żommu wieqaf u erġa' pprova.")); }
     return;
   }
+  if(b.id==="voiceTry"){ voiceSample(); return; }
   if(b.id==="replayIntro"){ $("setup").open=false; window.scrollTo({top:0,behavior:"smooth"}); startNFC(); R?.sleep(false); introStep(0); }
 });
-$("setupBody").addEventListener("change",e=>{ if(e.target.id==="tapScan"){ tapScans=e.target.checked; LS.set("robi-tapscans",tapScans); } });
+$("setupBody").addEventListener("change",e=>{ if(e.target.id==="tapScan"){ tapScans=e.target.checked; LS.set("robi-tapscans",tapScans); }
+  if(e.target.id==="voiceSel"){ voiceName=e.target.value; LS.set("robi-voice-name",voiceName); voiceSample(); }
+  if(e.target.id==="voicePitch"){ voicePitch=+e.target.value; LS.set("robi-voice-pitch",voicePitch); voiceSample(); } });
+function voiceOptions(){
+  const vs=voicesByScore();
+  return `<option value="">${esc(lang==="mt"?"Awtomatika":"Automatic")}${vs[0]?` (${esc(vs[0].name)})`:""}</option>`+
+    vs.map(v=>`<option value="${esc(v.name)}"${v.name===voiceName?" selected":""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("");
+}
+function voiceSample(){ ac(); speak(T(`Beep boop! Hi ${F()}, I'm ${N()}!`,`Bip bup! Bonġu ${FM()}, jien ${N()}!`)); }
+// Voices load late (Chrome, iOS): refresh the list when they arrive.
+try{ speechSynthesis.addEventListener("voiceschanged",()=>{ const s=$("voiceSel"); if(s) s.innerHTML=voiceOptions(); }); }catch{}
 
 /* ---------------- start-up ---------------- */
 (function boot(){
