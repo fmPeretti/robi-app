@@ -111,16 +111,32 @@ function setupIos() {
   write(ad, swift);
   ok("NFC plugin added to AppDelegate.swift");
 
-  // 2. storyboard uses our view controller (it registers the plugin)
-  const sb = path.join(appDir, "Base.lproj", "Main.storyboard");
-  let sbx = read(sb);
-  if (!sbx.includes("RobiViewController")) {
-    sbx = sbx.replace(/customClass="CAPBridgeViewController" customModule="Capacitor"/,
-      'customClass="RobiViewController" customModule="App" customModuleProvider="target"');
-    if (!sbx.includes("RobiViewController")) fail("Couldn't patch Main.storyboard");
-    write(sb, sbx);
+  // 2. the app's root screen is our view controller (it registers the plugin).
+  //    Capacitor 8 creates it in code in SceneDelegate.swift and no longer uses Main.storyboard for it;
+  //    older templates still load it from the storyboard. Patch whichever is there.
+  const sd = path.join(appDir, "SceneDelegate.swift");
+  let rootPatched = false;
+  if (fs.existsSync(sd)) {
+    let sds = read(sd);
+    if (!sds.includes("RobiViewController()")) {
+      sds = sds.replace("rootViewController = CAPBridgeViewController()", "rootViewController = RobiViewController()");
+      if (!sds.includes("RobiViewController()")) fail("Couldn't patch SceneDelegate.swift");
+      write(sd, sds);
+    }
+    ok("SceneDelegate.swift uses RobiViewController");
+    rootPatched = true;
   }
-  ok("Main.storyboard uses RobiViewController");
+  const sb = path.join(appDir, "Base.lproj", "Main.storyboard");
+  if (fs.existsSync(sb)) {
+    let sbx = read(sb);
+    if (!sbx.includes("RobiViewController")) {
+      sbx = sbx.replace(/customClass="CAPBridgeViewController" customModule="Capacitor"/,
+        'customClass="RobiViewController" customModule="App" customModuleProvider="target"');
+      if (!sbx.includes("RobiViewController") && !rootPatched) fail("Couldn't patch Main.storyboard");
+      write(sb, sbx);
+    }
+    ok("Main.storyboard uses RobiViewController");
+  } else if (!rootPatched) fail("Found neither SceneDelegate.swift nor Main.storyboard to register the plugin");
 
   // 3. Info.plist: why the app uses NFC
   const plist = path.join(appDir, "Info.plist");
