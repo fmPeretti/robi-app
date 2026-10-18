@@ -1111,16 +1111,16 @@ function enter(screen){
 const INTRO=[
   {say:()=>T("Hello! Nice to meet you! I'm your robot friend!","Bonġu! Għandi pjaċir nsir nafek! Jien il-ħabib robot tiegħek!"), anim:"wave"},
   {say:()=>T("I can dance too!","Naf niżfen ukoll!"), anim:"dance"},
-  {say:()=>T("Oops! My name was saved in my RAM, and I forgot it 😔 Can you give me a new name?",
-             "Ops! Ismi kien maħżun fir-RAM tiegħi, u insejtu 😔 Tista' tagħtini isem ġdid?"), anim:"think", form:"robot"},
+  {say:()=>T("My name was stored in RAM, so I forgot it 😔 This time I'll do it right! What do you want to call me?",
+             "Ismi kien maħżun fir-RAM, u insejtu 😔 Din id-darba se nagħmilha sew! Kif trid issejjaħli?"), anim:"think", form:"robot"},
   {say:()=>T("Thinking… thinking… saving… saving… beep boop!","Naħseb… naħseb… qed nissejvja… qed nissejvja… bip bup!"), anim:"think", auto:"saving"},
   {say:()=>T(`Great! Now I remember: my name is ${N()}!`,`Bravu! Issa niftakar: jisimni ${N()}!`), anim:"jump"},
   {say:()=>T("Hey, and what's your name?","U int, x'jismek?"), anim:"tilt", form:"friend"},
   {say:()=>T(`${F()}?! OMG!! I can't believe I'm meeting the great ${F()}!`,`${FM()}?! Ajma!! Ma nistax nemmen li qed niltaqa' mal-leġġenda ${FM()}!`), anim:"jump"},
-  {say:()=>T("Your family told me all about you! They say you're the best! You're a legend around here!",
-             "Il-familja tiegħek qaltli kollox fuqek! Jgħidu li int l-aqwa! Int leġġenda hawnhekk!"), anim:"waveBoth"},
-  {say:()=>T("Wow! Wow! Wow!","Wow! Wow! Wow!"), anim:"laugh", auto:"next"},
-  {say:()=>T(`Let's be best friends, ${F()}! Ready to play?`,`Ejja nkunu l-aqwa ħbieb, ${FM()}! Lest biex nilagħbu?`), anim:"wave", last:true}
+  {say:()=>T("I know your parents! They're friends of us robots, and they talk about you all the time! You're a legend around here!",
+             "Naf lill-ġenituri tiegħek! Huma ħbieb tagħna r-robots, u dejjem jitkellmu fuqek! Int leġġenda hawnhekk!"), anim:"waveBoth"},
+  {say:()=>T("Crazy!","Inkredibbli!"), anim:"laugh", auto:"next"},
+  {say:()=>T("Well… hello!","Mela… bonġu!"), anim:"wave", last:true}
 ];
 function renderIntro(){
   const s=INTRO[S.step];
