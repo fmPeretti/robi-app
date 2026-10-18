@@ -150,6 +150,9 @@ body.compact details.setup:not([open]){display:none}
 .form{display:flex;flex-direction:column;gap:12px}
 .form input{font-family:var(--font-display);font-size:1.6rem;padding:14px 16px;border-radius:20px;border:3px solid var(--line);background:var(--surface);color:var(--ink);text-align:center;min-width:0}
 .status{text-align:center;color:var(--muted)}
+/* NFC messages also float above the Scan button: the status line can be off screen under the menu */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:#fff;border-radius:18px;padding:12px 16px;text-align:center;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px}
+.toast .t-en,.toast .t-mt{color:#fff;font-size:1rem}.toast .t-mt{opacity:.85;font-size:.92rem}
 .status .t-en{font-size:.95rem}.status .t-mt{font-size:.88rem}
 details.setup{background:var(--surface);border-radius:22px;padding:14px 18px;font-size:.95rem;box-shadow:var(--shadow)}
 details.setup summary{cursor:pointer;color:var(--muted)}
@@ -193,6 +196,7 @@ summary .t-mt{margin-left:.5em}
 
   <div class="panel" id="panel"></div>
   <div class="status" id="status"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
   <button class="scanfab" id="scanBtn" hidden></button>
 
   <details class="setup" id="setup">
@@ -934,7 +938,7 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
-const APP_VERSION="2026-10-18b";   // shown in grown-up setup, to tell which build a phone is running
+const APP_VERSION="2026-10-18c";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
@@ -1065,7 +1069,9 @@ function adoptNames(info){
   if(changed){ applyTitle(); if(!onboarded){ onboarded=true; LS.set("robi-onboarded",true); }
     if(S.screen!=="intro") say(T(`Beep! I remember now: my name is ${N()}!`,`Bip! Issa niftakar: jisimni ${N()}!`)); }
 }
-function setStatus(t){ $("status").innerHTML = t?tx(t):""; }
+let toastTimer=0;
+function setStatus(t){ $("status").innerHTML = t?tx(t):"";
+  const el=$("toast"); clearTimeout(toastTimer); el.innerHTML = t?tx(t):""; el.hidden=!t; if(t) toastTimer=setTimeout(()=>{ el.hidden=true; },8000); }
 
 /* ============================================================
    Screens + game state
