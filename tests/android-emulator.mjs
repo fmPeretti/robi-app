@@ -59,7 +59,7 @@ shot("1-wake");
 const r = await page.evaluate(async () => {
   const out = { version: APP_VERSION, platform: PLATFORM, plugin: !!NativeNfc, published: Capacitor.isPluginAvailable("RobiNfc") };
   // a write waits for a tag (forever on an emulator with NFC), so "still waiting" also means Java got the call
-  const tryCall = async (m, o) => { try { return { ok: await Promise.race([NativeNfc[m](o || {}), new Promise(res => setTimeout(() => res("pending"), 4000))]) }; } catch (e) { return { error: e.message, code: e.code }; } };
+  const tryCall = async (m, o) => { try { const v = await Promise.race([NativeNfc[m](o || {}), new Promise(res => setTimeout(() => res("pending"), 4000))]); return { resolved: true, ok: v === undefined ? null : v }; } catch (e) { return { error: e.message, code: e.code }; } };
   out.isAvailable = await tryCall("isAvailable");
   out.getLaunchTag = await tryCall("getLaunchTag");
   out.startScan = await tryCall("startScan");
@@ -70,7 +70,8 @@ const r = await page.evaluate(async () => {
   return out;
 });
 console.log("    " + JSON.stringify(r));
-const answered = x => x && (x.ok !== undefined || (x.error && !/not implemented/i.test(x.error)));
+// a plain call.resolve() comes back empty: that is still an answer from Java
+const answered = x => x && (x.resolved || (x.error && !/not implemented/i.test(x.error)));
 check("running the build under test", !!r.version, r.version);
 check("the page knows it's the Android app", r.platform === "android");
 check("the page has the RobiNfc plugin", r.plugin && r.published);
