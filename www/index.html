@@ -933,6 +933,10 @@ const CAP=window.Capacitor;
 const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
+const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
+// iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
+const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
+                    :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
 const WEB_BASE=window.ROBI_WEB_BASE||"";
 const NFC={ok:NativeNfc?true:("NDEFReader" in window), reader:null, scanning:false, busy:false, listening:false, last:{g:null,t:0}};
 const LEGACY={chest:"terminal",back:"hash",bootl:"bootL",bootr:"bootR",antenna:"antenna",terminal:"terminal",hash:"hash"};
@@ -985,7 +989,9 @@ const SCAN_MSG="Hold me near the phone · Qarrabni lejn it-telefon";
 function listenNative(){
   if(!NativeNfc||NFC.listening) return; NFC.listening=true;
   NativeNfc.addListener("tag",ev=>{ if(NFC.busy) return; handleTagInfo(parseSimple(ev.records)); });
-  NativeNfc.addListener("sessionEnded",()=>{ NFC.scanning=false; renderScanBtn(); });
+  // iOS ends the session on cancel (200), timeout (201) and after a read (204); anything else is a real error
+  NativeNfc.addListener("sessionEnded",ev=>{ NFC.scanning=false; renderScanBtn();
+    if(ev&&ev.code!=null&&![200,201,204].includes(ev.code)) setStatus(T(`The NFC scanner couldn't start: ${ev.reason} (${ev.code})`,`L-iskaner tal-NFC ma setax jibda: ${ev.reason} (${ev.code})`)); });
 }
 async function startNFC(){
   if(NativeNfc){
@@ -993,9 +999,9 @@ async function startNFC(){
     if(NFC.scanning) return;
     try{
       const a=await NativeNfc.isAvailable();
-      if(!a.enabled){ setStatus(T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.")); return; }
+      if(!a.enabled){ setStatus(NO_NFC()); return; }
       await NativeNfc.startScan({message:SCAN_MSG}); NFC.scanning=true; setStatus("");
-    }catch(e){ setStatus(T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.")); }
+    }catch(e){ setStatus(IOS&&e&&e.message?T(`NFC error: ${e.message}`,`Żball tal-NFC: ${e.message}`):NO_NFC()); }
     renderScanBtn(); return;
   }
   if(!NFC.ok||NFC.scanning) return;

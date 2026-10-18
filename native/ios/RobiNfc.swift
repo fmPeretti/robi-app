@@ -66,7 +66,7 @@ public class RobiNfcPlugin: CAPPlugin, CAPBridgedPlugin, NFCNDEFReaderSessionDel
     public func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
         if let w = pendingWrite { w.reject(error.localizedDescription, "SESSION_ENDED"); w.keepAlive = false; pendingWrite = nil }
         if session === self.session { self.session = nil }
-        notifyListeners("sessionEnded", data: ["reason": error.localizedDescription])
+        notifyListeners("sessionEnded", data: ["reason": error.localizedDescription, "code": (error as NSError).code])
     }
 
     public func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
