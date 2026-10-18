@@ -709,7 +709,13 @@ function speak(t){
 
 /* ---------------- sound ---------------- */
 let actx=null;
-function ac(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch{} return actx; }
+// iOS: "playback" lets the sounds play with the ring/silent switch on. iOS also leaves the context
+// "interrupted" (not just "suspended") after backgrounding or a call, so resume on anything but "running".
+try{ if(navigator.audioSession) navigator.audioSession.type="playback"; }catch{}
+function ac(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state!=="running") actx.resume(); }catch{} return actx; }
+// iOS only unlocks audio inside a touchend/click, so every tap anywhere wakes the audio up.
+["touchend","click"].forEach(ev=>document.addEventListener(ev,()=>{ if(actx&&actx.state!=="running") ac(); },{capture:true,passive:true}));
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&actx&&actx.state!=="running") try{ actx.resume(); }catch{} });
 function tone(f,dur=0.12,type="square",when=0,vol=0.1){
   const a=ac(); if(!a) return;
   const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+when;

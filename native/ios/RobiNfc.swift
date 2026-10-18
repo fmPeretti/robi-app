@@ -164,5 +164,8 @@ public class RobiNfcPlugin: CAPPlugin, CAPBridgedPlugin, NFCNDEFReaderSessionDel
 class RobiViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(RobiNfcPlugin())
+        // Play Robi's sounds even with the ring/silent switch on, mixed with any music that's playing.
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
 }

@@ -92,14 +92,16 @@ function setupIos() {
   const appDir = path.join(root, "ios", "App", "App");
   if (!fs.existsSync(appDir)) fail("ios/ not found. Run `npx cap add ios` first (on a Mac).");
 
-  // 1. plugin + view controller appended to AppDelegate.swift (already part of the Xcode target)
+  // 1. plugin + view controller appended to AppDelegate.swift (already part of the Xcode target).
+  //    A previous copy (from its marker line to the end) is replaced, so re-running picks up changes.
   const ad = path.join(appDir, "AppDelegate.swift");
   let swift = read(ad);
-  if (!swift.includes("RobiNfcPlugin")) {
-    if (!swift.includes("import CoreNFC")) swift = swift.replace("import Capacitor", "import Capacitor\nimport CoreNFC");
-    swift += "\n" + read(path.join(root, "native", "ios", "RobiNfc.swift"));
-    write(ad, swift);
-  }
+  const mark = swift.indexOf("// ===================== Robi NFC");
+  if (mark >= 0) swift = swift.slice(0, mark).replace(/\n+$/, "\n");
+  for (const m of ["CoreNFC", "AVFoundation"])
+    if (!swift.includes(`import ${m}`)) swift = swift.replace("import Capacitor", `import Capacitor\nimport ${m}`);
+  swift += "\n" + read(path.join(root, "native", "ios", "RobiNfc.swift"));
+  write(ad, swift);
   ok("NFC plugin added to AppDelegate.swift");
 
   // 2. storyboard uses our view controller (it registers the plugin)
