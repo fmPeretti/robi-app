@@ -934,6 +934,7 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
+const APP_VERSION="2026-10-18b";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
@@ -996,9 +997,11 @@ function listenNative(){
 async function startNFC(){
   if(NativeNfc){
     listenNative();
-    if(NFC.scanning) return;
+    if(NFC.scanning){ if(IOS) setStatus(T("The scanner is already open. Hold the tag near the top of the phone.","L-iskaner diġà miftuħ. Qarreb it-tag lejn in-naħa ta' fuq tat-telefon.")); return; }
+    let a;
+    try{ a=await NativeNfc.isAvailable(); }
+    catch(e){ setStatus(T(`The NFC part of the app is missing (${e&&e.message||e}). Run setup-native and cap sync again.`,`Il-parti tal-NFC tal-app nieqsa (${e&&e.message||e}). Erġa' ħaddem setup-native u cap sync.`)); renderScanBtn(); return; }
     try{
-      const a=await NativeNfc.isAvailable();
       if(!a.enabled){ setStatus(NO_NFC()); return; }
       await NativeNfc.startScan({message:SCAN_MSG}); NFC.scanning=true; setStatus("");
     }catch(e){ setStatus(IOS&&e&&e.message?T(`NFC error: ${e.message}`,`Żball tal-NFC: ${e.message}`):NO_NFC()); }
@@ -1394,7 +1397,8 @@ function renderSetup(){
     <div class="row2"><button id="voiceTry">${tx(T("Try it","Ippruvaha"))}</button></div>
     <p>${tx(T("More and nicer voices on iPhone: Settings → Accessibility → Spoken Content → Voices → English. Download one marked Enhanced or Premium, then reopen the app.",
               "Iktar vuċijiet fuq l-iPhone: Settings → Accessibility → Spoken Content → Voices → English. Niżżel waħda Enhanced jew Premium, imbagħad erġa' iftaħ l-app."))}</p>
-    <div class="row2"><button id="replayIntro">${tx(T("Replay the introduction","Erġa' ara l-introduzzjoni"))}</button></div>`;
+    <div class="row2"><button id="replayIntro">${tx(T("Replay the introduction","Erġa' ara l-introduzzjoni"))}</button></div>
+    <p><small>Robi ${APP_VERSION}${NATIVE?" · "+esc(PLATFORM):" · web"}</small></p>`;
 }
 $("setupBody").addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return; ac();
@@ -1452,7 +1456,7 @@ try{ speechSynthesis.addEventListener("voiceschanged",()=>{ const s=$("voiceSel"
   }
   if(NativeNfc){
     listenNative();
-    $("scanBtn").addEventListener("click",()=>{ ac(); startNFC(); });
+    $("scanBtn").addEventListener("click",()=>{ ac(); setStatus(T("Opening the NFC scanner…","Qed niftaħ l-iskaner tal-NFC…")); startNFC(); });
     if(PLATFORM==="android") startNFC();      // Android reads tags whenever the app is open
     // NFC switched on from the settings while the app was in the background: start reading on return
     document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&PLATFORM==="android"&&!NFC.scanning&&!NFC.busy) startNFC(); });
