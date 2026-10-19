@@ -19,6 +19,22 @@ public class RobiNfcPlugin: CAPPlugin, CAPBridgedPlugin, NFCNDEFReaderSessionDel
     private var session: NFCNDEFReaderSession?
     private var pendingWrite: CAPPluginCall?
 
+    // robi://antenna links (e.g. from a Shortcuts NFC automation on an iPhone that can't use NFC in the app)
+    // arrive as Capacitor's open-URL notification, also when the link is what launched the app.
+    public override func load() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleOpenUrl(_:)), name: .capacitorOpenURL, object: nil)
+    }
+
+    @objc func handleOpenUrl(_ notification: Notification) {
+        guard let info = notification.object as? [String: Any], let url = info["url"] as? URL,
+              url.scheme?.lowercased() == "robi" else { return }
+        // robi://antenna, robi://scan/antenna and robi://#antenna all name the gadget
+        let last = url.pathComponents.last.flatMap { $0 == "/" ? nil : $0 }
+        let word = [url.fragment, last, url.host].compactMap { $0 }.first { !$0.isEmpty } ?? ""
+        // kept until the page's listener is attached (the link may be what launched the app)
+        notifyListeners("tag", data: ["records": [["type": "url", "data": "robi://#" + word]]], retainUntilConsumed: true)
+    }
+
     @objc func isAvailable(_ call: CAPPluginCall) {
         let ok = NFCNDEFReaderSession.readingAvailable
         call.resolve(["available": ok, "enabled": ok, "needsButton": true])

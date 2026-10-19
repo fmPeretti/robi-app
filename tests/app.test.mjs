@@ -160,14 +160,34 @@ test("iOS: a scanner error is shown on screen", async () => {
   await waitFor(p, () => document.getElementById("toast").innerText.includes("Missing required entitlement"));
 });
 
-test("iOS: NFC not available shows the iPhone message", async () => {
+test("iOS: an iPhone that can't use NFC stays quiet and hides Scan (free Apple ID)", async () => {
   const p = await open("ios", { storage: READY, auto: { isAvailable: { available: false, enabled: false, needsButton: true } } });
   await toMenu(p);
-  await waitFor(p, () => document.getElementById("toast").innerText.includes("This iPhone app can't use NFC"));
-  await p.evaluate(() => setStatus(""));
-  await p.click("#scanBtn");
-  await waitFor(p, () => document.getElementById("toast").innerText.includes("This iPhone app can't use NFC"));
+  await waitFor(p, () => NFC.unavailable === true);
+  assert.equal(await toast(p), "", "no notice on every wake");
+  assert.equal(await p.evaluate(() => document.getElementById("scanBtn").hidden), true);
   assert.ok(!(await calls(p)).includes("startScan"));
+  await p.evaluate(() => startNFC(true));                          // if Scan were tapped, it explains why
+  await waitFor(p, () => document.getElementById("toast").innerText.includes("This iPhone app can't use NFC"));
+});
+
+test("iOS: robi:// links (Shortcuts NFC automations) reach the game, also before the app is ready", async () => {
+  // what RobiNfc.swift sends for robi://antenna, robi://scan/terminal and robi://#hash
+  const p = await open("ios", { storage: READY, auto: { isAvailable: { available: false, enabled: false, needsButton: true } } });
+  await toMenu(p);
+  await p.click('[data-go="explore"]');
+  for (const [i, g] of ["antenna", "terminal", "hash", "bootL", "bootR"].entries()) {
+    await nativeEvent(p, "tag", { records: [{ type: "url", data: "robi://#" + g }] });
+    await waitFor(p, n => S.found.length === n, i + 1);
+  }
+  assert.deepEqual(await p.evaluate(() => ["robi://antenna", "robi://scan/terminal", "robi://#hash", "ROBI://BOOTL", "robi://bootR/"].map(partFromText)),
+    ["antenna", "terminal", "hash", "bootL", "bootR"]);
+  assert.equal(await p.evaluate(() => partFromText("robi://unknown")), null);
+  // the link launched the app: the event arrives while Robi is still asleep
+  const q = await open("ios", { storage: READY, auto: { isAvailable: { available: false, enabled: false, needsButton: true } } });
+  await nativeEvent(q, "tag", { records: [{ type: "url", data: "robi://#bootR" }] });
+  await waitFor(q, t => document.getElementById("bubble").innerText.includes(t), "Right Rocket Boot");
+  pageErrors(p); pageErrors(q);
 });
 
 test("iOS: plugin not registered shows a clear error (the old SceneDelegate bug)", async () => {

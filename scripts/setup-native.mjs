@@ -148,6 +148,15 @@ function setupIos() {
   }
   ok("Info.plist: NFC usage text");
 
+  // robi:// links open the app with a gadget (Shortcuts NFC automations: a free Apple ID can't use NFC in the app)
+  p = read(plist);
+  if (!p.includes("<string>robi</string>")) {
+    const i = p.lastIndexOf("</dict>");
+    p = p.slice(0, i) + "\t<key>CFBundleURLTypes</key>\n\t<array>\n\t\t<dict>\n\t\t\t<key>CFBundleURLName</key>\n\t\t\t<string>robi</string>\n\t\t\t<key>CFBundleURLSchemes</key>\n\t\t\t<array>\n\t\t\t\t<string>robi</string>\n\t\t\t</array>\n\t\t</dict>\n\t</array>\n" + p.slice(i);
+    write(plist, p);
+  }
+  ok("Info.plist: robi:// links open the app");
+
   // 4. entitlements file (Xcode still needs the capability switched on, see README)
   const ent = path.join(appDir, "App.entitlements");
   if (!fs.existsSync(ent)) {

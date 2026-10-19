@@ -940,14 +940,14 @@ const NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
 const PLATFORM=NATIVE?CAP.getPlatform():"web";
 const NativeNfc=NATIVE&&CAP.registerPlugin?CAP.registerPlugin("RobiNfc"):null;
 const IOS=NATIVE&&CAP.getPlatform&&CAP.getPlatform()==="ios";
-const APP_VERSION="2026-10-18f";   // shown in grown-up setup, to tell which build a phone is running
+const APP_VERSION="2026-10-19a";   // shown in grown-up setup, to tell which build a phone is running
 // iPhone has no NFC switch: if reading fails, it is the phone model or the app's NFC permission
 const NO_NFC=()=>IOS?T("This iPhone app can't use NFC. In Xcode, add the Near Field Communication Tag Reading capability.","Din l-app tal-iPhone ma tistax tuża l-NFC. F'Xcode, żid il-capability Near Field Communication Tag Reading.")
                     :T("Turn on NFC in the phone settings to scan the toy.","Ixgħel l-NFC fis-settings tat-telefon biex tiskennja l-ġugarell.");
 const WEB_BASE=window.ROBI_WEB_BASE||"";
 const NFC={ok:NativeNfc?true:("NDEFReader" in window), reader:null, scanning:false, busy:false, listening:false, last:{g:null,t:0}};
 const LEGACY={chest:"terminal",back:"hash",bootl:"bootL",bootr:"bootR",antenna:"antenna",terminal:"terminal",hash:"hash"};
-function partFromText(s){ const m=String(s).match(/#([a-z]+)\s*$/i); return m?LEGACY[m[1].toLowerCase()]||null:null; }
+function partFromText(s){ const m=String(s).match(/#([a-z]+)\s*$/i)||String(s).match(/^robi:\/\/(?:scan\/)?([a-z]+)\/?\s*$/i); return m?LEGACY[m[1].toLowerCase()]||null:null; }
 function decodeRec(r){ try{ return new TextDecoder(r.encoding||"utf-8").decode(r.data); }catch{ return ""; } }
 function isOurs(r){
   if(r.recordType==="mime" && r.mediaType===MIME) return true;
@@ -1002,7 +1002,7 @@ function listenNative(){
   Promise.resolve(NativeNfc.addListener("sessionEnded",ev=>{ NFC.scanning=false; renderScanBtn();
     if(ev&&ev.code!=null&&![200,201,204].includes(ev.code)) setStatus(T(`The NFC scanner couldn't start: ${ev.reason} (${ev.code})`,`L-iskaner tal-NFC ma setax jibda: ${ev.reason} (${ev.code})`)); })).catch(failed);
 }
-async function startNFC(){
+async function startNFC(explicit){
   if(NativeNfc){
     try{ listenNative(); }catch(e){ NFC.listening=false; nfcPluginError(e); renderScanBtn(); return; }
     if(NFC.scanning){ if(IOS) setStatus(T("The scanner is already open. Hold the tag near the top of the phone.","L-iskaner diġà miftuħ. Qarreb it-tag lejn in-naħa ta' fuq tat-telefon.")); return; }
@@ -1010,7 +1010,11 @@ async function startNFC(){
     try{ a=await NativeNfc.isAvailable(); }
     catch(e){ setStatus(T(`The NFC part of the app is missing (${e&&e.message||e}). Run setup-native and cap sync again.`,`Il-parti tal-NFC tal-app nieqsa (${e&&e.message||e}). Erġa' ħaddem setup-native u cap sync.`)); renderScanBtn(); return; }
     try{
-      if(!a.enabled){ setStatus(NO_NFC()); return; }
+      if(!a.enabled){
+        // iPhone without NFC in the app (e.g. free Apple ID): tags still work through the web or robi:// links,
+        // so don't nag on every wake; hide Scan and only explain when someone taps it
+        if(IOS){ NFC.unavailable=true; renderScanBtn(); if(explicit) setStatus(NO_NFC()); return; }
+        setStatus(NO_NFC()); return; }
       await NativeNfc.startScan({message:SCAN_MSG}); NFC.scanning=true; setStatus("");
     }catch(e){ setStatus(IOS&&e&&e.message?T(`NFC error: ${e.message}`,`Żball tal-NFC: ${e.message}`):NO_NFC()); }
     renderScanBtn(); return;
@@ -1063,7 +1067,7 @@ async function writeTagNative(g,timeoutMs){
 /* iPhone: the system NFC sheet only opens from a tap, so the app shows a Scan button */
 function renderScanBtn(){
   const b=$("scanBtn"); if(!b) return;
-  b.hidden=!(PLATFORM==="ios" && !NFC.scanning && S.screen!=="wake");
+  b.hidden=!(PLATFORM==="ios" && !NFC.scanning && !NFC.unavailable && S.screen!=="wake");
   b.innerHTML=ICON.antenna+tx(T("Scan","Skennja"));
 }
 function adoptNames(info){
@@ -1222,7 +1226,8 @@ function gadgetFlash(g,quiet){ const d=GADGETS[g]; R?.glow(g,d.color); tone(d.to
 
 function onScan(g,src){
   ac();
-  if(S.screen==="wake"){ ACTS.wake(); return; }
+  // a tag that wakes Robi (or launches the app) still counts: wake up, then react to that gadget
+  if(S.screen==="wake"){ ACTS.wake(); if(onboarded) setTimeout(()=>{ if(S.screen==="menu") onScan(g,src); },1200); return; }
   gadgetFlash(g);
   switch(S.screen){
     case "explore": return exploreScan(g);
@@ -1469,7 +1474,7 @@ try{ speechSynthesis.addEventListener("voiceschanged",()=>{ const s=$("voiceSel"
     go("wake"); R?.sleep(true); say(UI.sleeping);
   }
   if(NativeNfc){
-    $("scanBtn").addEventListener("click",()=>{ ac(); setStatus(T("Opening the NFC scanner…","Qed niftaħ l-iskaner tal-NFC…")); startNFC(); });
+    $("scanBtn").addEventListener("click",()=>{ ac(); setStatus(T("Opening the NFC scanner…","Qed niftaħ l-iskaner tal-NFC…")); startNFC(true); });
     try{ listenNative(); }catch(e){ NFC.listening=false; nfcPluginError(e); }
     if(PLATFORM==="android") startNFC();      // Android reads tags whenever the app is open
     // NFC switched on from the settings while the app was in the background: start reading on return
